@@ -4,7 +4,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
-
+/*
+Resource https://www.dcc.fc.up.pt/~ricroc/aulas/1920/ac/apontamentos/P04_encoding_mips_instructions.pdf
+ */
 public class MIPSParser {
     Map<String, String> labelToBinLoc;
     String inputFile;
@@ -14,6 +16,7 @@ public class MIPSParser {
         labelToBinLoc = new TreeMap<>();
         firstPass();
         secondPass();
+
     }
 
     /*
