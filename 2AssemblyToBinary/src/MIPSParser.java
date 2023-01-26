@@ -1,3 +1,5 @@
+import jdk.dynalink.Operation;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,6 +13,7 @@ Resource https://www.dcc.fc.up.pt/~ricroc/aulas/1920/ac/apontamentos/P04_encodin
 public class MIPSParser {
     Map<String, String> labelToBinLoc;
     String inputFile;
+    Instruction inst = new Instruction();
 
     public void printFileToBinary(String inputFile) {
         this.inputFile = inputFile;
@@ -90,12 +93,37 @@ public class MIPSParser {
         Matcher matcher = labelPattern.matcher(command);
         if (matcher.find()) {
             System.out.println("match: " + matcher.group(1) + " remainder: \"" + matcher.group(2) + "\""); // gets the first match
+            processCommand(matcher.group(2).trim());
+        } else {
+            String[] tokens = command.split("[\\s,]+");
+            String formatType = inst.getOpcodeFormat(tokens[0]);
+            switch (formatType) {
+                case "R" -> printRFormat(tokens);
+                case "I" -> printIFormat(tokens);
+                case "J" -> printJFormat(tokens);
+            }
         }
     }
 
     private void printMapping() {
         for (String label : labelToBinLoc.keySet()) {
-            System.out.println(label + ":\t " + labelToBinLoc.get(label));
+            System.out.print(label + ":\t " + labelToBinLoc.get(label));
+            System.out.println();
         }
+    }
+
+    private void printRFormat(String[] tokens) {
+        System.out.print(inst.getOpCodeBin(tokens[0]));
+        System.out.println();
+    }
+
+    private void printIFormat(String[] tokens) {
+        System.out.print(inst.getOpCodeBin(tokens[0]));
+        System.out.println();
+    }
+
+    private void printJFormat(String[] tokens) {
+        System.out.print(inst.getOpCodeBin(tokens[0]));
+        System.out.println();
     }
 }
