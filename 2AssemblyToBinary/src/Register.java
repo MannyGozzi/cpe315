@@ -8,6 +8,7 @@ public class Register {
     Register() {
         type = new TreeMap<>();
         type.put("zero", Operations.getBinaryWithSize(0, 5));
+        type.put("0", Operations.getBinaryWithSize(0, 5));
         type.put("v0", Operations.getBinaryWithSize(2, 5));
         type.put("v1", Operations.getBinaryWithSize(3, 5));
         type.put("a0", Operations.getBinaryWithSize(4, 5));
@@ -36,5 +37,9 @@ public class Register {
         type.put("sp", Operations.getBinaryWithSize(29, 5));
         type.put("fp", Operations.getBinaryWithSize(30, 5));
         type.put("ra", Operations.getBinaryWithSize(31, 5));
+    }
+
+    public String getRegisterBin(String register) {
+        return type.get(register);
     }
 }

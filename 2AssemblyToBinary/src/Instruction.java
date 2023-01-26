@@ -7,23 +7,26 @@ public class Instruction {
     Map<String, String> opcode;
     Map<String, String> format;
 
+    Map<String, String> funct;
+
     Instruction() {
         opcode = new TreeMap<>();
         format = new TreeMap<>();
-        opcode.put("and",     "100100"); format.put("and",    "R");
-        opcode.put("or",      "100101"); format.put("or",     "R");
-        opcode.put("add",     "100000"); format.put("add",    "R");
-        opcode.put("addi",    "001000"); format.put("addi",   "R");
-        opcode.put("sll",     "000000"); format.put("sll",    "R");
-        opcode.put("sub",     "100010"); format.put("sub",    "R");
-        opcode.put("slt",     "101010"); format.put("slt",    "R");
-        opcode.put("beq",     "000100"); format.put("beq",    "R");
-        opcode.put("bne",     "000101"); format.put("bne",    "R");
+        funct = new TreeMap<>();
+        opcode.put("and",     "000000"); format.put("and",    "R"); funct.put("and", "100100");
+        opcode.put("or",      "000000"); format.put("or",     "R"); funct.put("or",  "100101");
+        opcode.put("add",     "000000"); format.put("add",    "R"); funct.put("add", "100000");
+        opcode.put("addi",    "001000"); format.put("addi",   "I");
+        opcode.put("sll",     "000000"); format.put("sll",    "I");
+        opcode.put("sub",     "000000"); format.put("sub",    "R"); funct.put("sub", "100010");
+        opcode.put("slt",     "000000"); format.put("slt",    "R"); funct.put("slt", "101010");
+        opcode.put("beq",     "000100"); format.put("beq",    "I");
+        opcode.put("bne",     "000101"); format.put("bne",    "I");
         opcode.put("lw",      "100011"); format.put("lw",     "I");
         opcode.put("sw",      "101011"); format.put("sw",     "I");
         opcode.put("j",       "000010"); format.put("j",      "J");
-        opcode.put("jr",      "001000"); format.put("jr",     "J");
-        opcode.put("jal",     "000011"); format.put("jal",    "J");
+        opcode.put("jr",      "000000"); format.put("jr",     "J");
+        opcode.put("jal",     "000000"); format.put("jal",    "J");
     }
 
     public String getOpCodeBin(String opcode_) {
@@ -32,5 +35,9 @@ public class Instruction {
 
     public String getOpcodeFormat(String opcode) {
         return format.get(opcode);
+    }
+
+    public String getOpcodeFunct(String opcode) {
+        return funct.get(opcode);
     }
 }
