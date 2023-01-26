@@ -98,12 +98,12 @@ public class MIPSParser {
             rt = reg.getRegisterBin(tokens[3]);
         } else if (labelToBinLoc.get(tokens[3]) != null) {
             rt = Operations.getBinaryWithSize(labelToBinLoc.get(tokens[3]), 26);
-        } else {
+        }
+        /* else {
             System.out.println("Tokens from error: ");
             printTokens(tokens);
             System.out.println("Error: " + tokens[3] + " is not a valid register");
-        }
-
+        } */
         System.out.println(op + " " + rs + " " + rt + " " + rd + " " + shamt + " " + funct);
     }
 
