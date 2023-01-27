@@ -6,8 +6,12 @@ import java.util.TreeMap;
 
 public class Main {
     public static void main(String[] args) {
-        String input = "test4.asm";
+        String inputFile = args[0];
+        if (inputFile == null) {
+            System.out.println("Please provide an input file");
+            return;
+        }
         MIPSParser parser = new MIPSParser();
-        parser.printFileToBinary(input);
+        parser.printFileToBinary(inputFile);
     }
 }
