@@ -23,8 +23,8 @@ public class MIPSParser {
         this.inputFile = inputFile;
         labelToBinLoc = new TreeMap<>();
         firstPass();
-        //printMapping();
-        //printCommands();
+        // printMapping();
+        // printCommands();
         secondPass();
     }
 
@@ -102,11 +102,6 @@ public class MIPSParser {
         } else if (labelToBinLoc.get(tokens[3]) != null) {
             rt = Operations.getBinaryWithSize(labelToBinLoc.get(tokens[3]), 26);
         }
-        /* else {
-            System.out.println("Tokens from error: ");
-            printTokens(tokens);
-            System.out.println("Error: " + tokens[3] + " is not a valid register");
-        } */
         System.out.println(op + " " + rs + " " + rt + " " + rd + " " + shamt + " " + funct);
     }
 
