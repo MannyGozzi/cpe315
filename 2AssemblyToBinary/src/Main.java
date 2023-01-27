@@ -6,7 +6,7 @@ import java.util.TreeMap;
 
 public class Main {
     public static void main(String[] args) {
-        String input = "test1.asm";
+        String input = "test4.asm";
         MIPSParser parser = new MIPSParser();
         parser.printFileToBinary(input);
     }

@@ -1,5 +1,3 @@
-import jdk.dynalink.Operation;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -73,6 +71,7 @@ public class MIPSParser {
         String[] tokens = command.split("[\\s,$#()]+");
         if (inst.getOpCodeBin(tokens[0]) == null) {
             System.out.println("invalid instruction: " + tokens[0]);
+            System.exit(1);
             return;
         }
         //printTokens(tokens);
