@@ -74,9 +74,9 @@ public class MIPSParser {
         printTokens(tokens);
         String formatType = inst.getOpcodeFormat(tokens[0]);
         switch (formatType) {
-            case "R" -> printRFormat(tokens.clone());
-            case "I" -> printIFormat(tokens.clone());
-            case "J" -> printJFormat(tokens.clone());
+            case "R" -> printRFormat(tokens);
+            case "I" -> printIFormat(tokens, lineNum);
+            case "J" -> printJFormat(tokens);
         }
     }
 
@@ -107,14 +107,35 @@ public class MIPSParser {
         System.out.println(op + " " + rs + " " + rt + " " + rd + " " + shamt + " " + funct);
     }
 
-    private void printIFormat(String[] tokens) {
-        System.out.print(inst.getOpCodeBin(tokens[0]));
-        System.out.println();
+    private void printIFormat(String[] tokens, int currLineNum) {
+        String op, rs, rt, regOffset, offset;
+        op = inst.getOpCodeBin(tokens[0]);
+        rs = reg.getRegisterBin(tokens[1]);
+        regOffset = reg.getRegisterBin(tokens[3]);
+        if (regOffset != null) {
+            rt = regOffset;
+            offset = Operations.getBinaryWithSize(Integer.parseInt(tokens[2]), 16);
+            System.out.println(op + " " + rs + " " + rt + " " + offset);
+            return;
+        }
+        rt = reg.getRegisterBin(tokens[2]);
+        Integer lineNum = labelToBinLoc.get(tokens[3]);
+        if (lineNum != null) {
+            offset = Operations.getBinaryWithSize(lineNum - currLineNum, 16);
+        } else {
+            offset = Operations.getBinaryWithSize(Integer.parseInt(tokens[3]), 16);
+        }
+        System.out.println(op + " " + rs + " " + rt + " " + offset);
     }
 
     private void printJFormat(String[] tokens) {
-        System.out.print(inst.getOpCodeBin(tokens[0]));
-        System.out.println();
+        // we have a jr instruction
+        String funct = inst.getOpcodeFunct(tokens[0]);
+        if (funct != null) {
+            System.out.println(inst.getOpCodeBin(tokens[0]) + " " + reg.getRegisterBin(tokens[1]) + Operations.getBinaryWithSize(0, 16) + " " + funct);
+            return;
+        }
+        System.out.println(inst.getOpCodeBin(tokens[0]) + " " + Operations.getBinaryWithSize(labelToBinLoc.get(tokens[1]), 26));
     }
 
     private void printCommands() {
