@@ -25,7 +25,7 @@ public class MIPSParser {
         this.inputFile = inputFile;
         labelToBinLoc = new TreeMap<>();
         firstPass();
-        printMapping();
+        //printMapping();
         //printCommands();
         secondPass();
     }
@@ -71,7 +71,11 @@ public class MIPSParser {
         if (command.charAt(0) == '#') return;
 
         String[] tokens = command.split("[\\s,$#()]+");
-        printTokens(tokens);
+        if (inst.getOpCodeBin(tokens[0]) == null) {
+            System.out.println("invalid instruction: " + tokens[0]);
+            return;
+        }
+        //printTokens(tokens);
         String formatType = inst.getOpcodeFormat(tokens[0]);
         switch (formatType) {
             case "R" -> printRFormat(tokens);
@@ -108,20 +112,34 @@ public class MIPSParser {
     }
 
     private void printIFormat(String[] tokens, int currLineNum) {
-        String op, rs, rt, regOffset, offset;
+        String op, rs, rt, register, offset, format;
         op = inst.getOpCodeBin(tokens[0]);
-        rs = reg.getRegisterBin(tokens[1]);
-        regOffset = reg.getRegisterBin(tokens[3]);
-        if (regOffset != null) {
-            rt = regOffset;
+        register = reg.getRegisterBin(tokens[3]);
+        format = inst.getOpcodeFunct(tokens[0]);
+        // jal, opcode target
+        if (format != null) {
+            String rd = reg.getRegisterBin(tokens[1]);
+            rt = reg.getRegisterBin(tokens[2]);
+            rs = Operations.getBinaryWithSize(0, 5);
+            String funct = inst.getOpcodeFunct(tokens[0]);
+            String shiftAmt = Operations.getBinaryWithSize(Integer.parseInt(tokens[3]), 5);
+            System.out.println(op + " " + rs + " " + rt + " " + rd + " " + shiftAmt + " " + funct);
+            return;
+        }
+        // format opcode, rt, offset(rs)
+        if (register != null) {
+            rs = register;
+            rt = reg.getRegisterBin(tokens[1]);
             offset = Operations.getBinaryWithSize(Integer.parseInt(tokens[2]), 16);
             System.out.println(op + " " + rs + " " + rt + " " + offset);
             return;
         }
+        // format opcode, rs, rt, offset
+        rs = reg.getRegisterBin(tokens[1]);
         rt = reg.getRegisterBin(tokens[2]);
         Integer lineNum = labelToBinLoc.get(tokens[3]);
         if (lineNum != null) {
-            offset = Operations.getBinaryWithSize(lineNum - currLineNum, 16);
+            offset = Operations.getBinaryWithSize(lineNum - currLineNum - 1, 16);
         } else {
             offset = Operations.getBinaryWithSize(Integer.parseInt(tokens[3]), 16);
         }
@@ -132,7 +150,7 @@ public class MIPSParser {
         // we have a jr instruction
         String funct = inst.getOpcodeFunct(tokens[0]);
         if (funct != null) {
-            System.out.println(inst.getOpCodeBin(tokens[0]) + " " + reg.getRegisterBin(tokens[1]) + Operations.getBinaryWithSize(0, 16) + " " + funct);
+            System.out.println(inst.getOpCodeBin(tokens[0]) + " " + reg.getRegisterBin(tokens[1]) + " " + Operations.getBinaryWithSize(0, 15) + " " + funct);
             return;
         }
         System.out.println(inst.getOpCodeBin(tokens[0]) + " " + Operations.getBinaryWithSize(labelToBinLoc.get(tokens[1]), 26));

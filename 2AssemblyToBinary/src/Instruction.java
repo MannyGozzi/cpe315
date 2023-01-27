@@ -26,7 +26,7 @@ public class Instruction {
         opcode.put("sw",      "101011"); format.put("sw",     "I");
         opcode.put("j",       "000010"); format.put("j",      "J");
         opcode.put("jr",      "000000"); format.put("jr",     "J"); funct.put("jr", "001000");
-        opcode.put("jal",     "000000"); format.put("jal",    "J");
+        opcode.put("jal",     "000011"); format.put("jal",    "J");
     }
 
     public String getOpCodeBin(String opcode_) {
