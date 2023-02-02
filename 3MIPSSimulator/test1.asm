@@ -1,30 +1,8 @@
-# This is test program 1.  This program does nothing useful.
-# # # # #### # #
+#This is test program 1
+#This computes the sum of 1 to 10
 
-	add $s0, $0, $zero
-	addi $t0, $t0, 100#test comment
-	addi $a0, $a0,100
-test:	add $s0, $s0, $a0 # this is a comment
-	addi $a0, $a0, -1
-	bne $a0, $0, test	# this is another comment
-	addi $a0, $a0, 100
-
-test1:
-    #test comment
-
-
-
-lw	$a0, 8($a1)
-	sw $a0,4($a1)
-  j test1
-jr	$ra
-	jal test1
-	slt$t0,$a0,$a1
-	beq$t0,$t1,test
-	sub $t3, $t1, $t1
-
-
-
-
-
-        sll $a0, $a1, 2
+	addi $a0, $a0, 10 # load $a0 with 10
+loop:	add $s0, $s0, $a0
+	sw $a0, 0($a0)
+	addi $a0, $a0, -1  # decrement $a0
+	bne $a0, $0, loop  # if $a0 equals 0 then break out of the loop

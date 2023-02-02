@@ -7,6 +7,7 @@ Resources:
     https://www.dcc.fc.up.pt/~ricroc/aulas/1920/ac/apontamentos/P04_encoding_mips_instructions.pdf
     http://users.csc.calpoly.edu/~jseng/MD00565-2B-MIPS32-QRC-01.01.pdf
     https://opencores.org/projects/plasma/opcodes
+    https://www.dsi.unive.it/~gasparetto/materials/MIPS_Instruction_Set.pdf
  */
 public class MIPSParser {
     Map<String, Integer> labelToLine;
@@ -51,7 +52,9 @@ public class MIPSParser {
         }
         displayPrompt();
         while(input.hasNextLine()) {
-            String[] commands = input.nextLine().trim().split(" ");
+            String inputString = input.nextLine();
+            String[] commands = inputString.trim().split(" ");
+            if (!script.equals("")) System.out.println(inputString);
             if (commands[0].equals("h")) {
                 printHelp();
             } else if (commands[0].equals("d")){
@@ -63,7 +66,7 @@ public class MIPSParser {
             } else if (commands[0].equals("r")){
                 step(-1);
             } else if (commands.length == 3 && commands[0].equals("m")){
-
+                memDump(Integer.parseInt(commands[1]), Integer.parseInt(commands[2]));
             } else if (commands[0].equals("c")){
                 pc = 0;
                 mem = new int[8192];
@@ -95,17 +98,18 @@ public class MIPSParser {
     Executes until program termination if steps = -1
      */
     private void step(int steps) {
-        System.out.println(steps + " instruction(s) executed\n");
         if (steps < 0) {
             while (pc < commands.size()) {
                 executeCommand(commands.get(pc));
-                System.out.println("pc: " + pc);
+                //System.out.println("pc: " + pc);
             }
         } else {
             for (int i = 0; i < steps && pc < commands.size(); ++i) {
+                //System.out.println("pc: " + pc);
                 executeCommand(commands.get(pc));
-                System.out.println("pc: " + pc);
+                //System.out.println("pc: " + pc);
             }
+            System.out.println("\t\t" + steps + " instruction(s) executed");
         }
     }
 
@@ -113,7 +117,7 @@ public class MIPSParser {
     private void executeCommand(String command) {
         String[] tokens = command.split("[\\s,$#()]+");
         String opName = tokens[0];
-        System.out.println(command);
+        //System.out.println(command);
         switch (opName) {
             case "and" -> and(tokens[1], tokens[2], tokens[3]);
             case "or" -> or(tokens[1], tokens[2], tokens[3]);
@@ -131,23 +135,6 @@ public class MIPSParser {
             case "jal" -> jal(tokens[1]);
         }
     }
-
-        /*
-    opcode.put("and",     "000000"); format.put("and",    "R"); funct.put("and", "100100");
-        opcode.put("or",      "000000"); format.put("or",     "R"); funct.put("or",  "100101");
-        opcode.put("add",     "000000"); format.put("add",    "R"); funct.put("add", "100000");
-        opcode.put("addi",    "001000"); format.put("addi",   "I");
-        opcode.put("sll",     "000000"); format.put("sll",    "I"); funct.put("sll", "000000");
-        opcode.put("sub",     "000000"); format.put("sub",    "R"); funct.put("sub", "100010");
-        opcode.put("slt",     "000000"); format.put("slt",    "R"); funct.put("slt", "101010");
-        opcode.put("beq",     "000100"); format.put("beq",    "I");
-        opcode.put("bne",     "000101"); format.put("bne",    "I");
-        opcode.put("lw",      "100011"); format.put("lw",     "I");
-        opcode.put("sw",      "101011"); format.put("sw",     "I");
-        opcode.put("j",       "000010"); format.put("j",      "J");
-        opcode.put("jr",      "000000"); format.put("jr",     "J"); funct.put("jr", "001000");
-        opcode.put("jal",     "000011"); format.
-     */
 
     private void and(String dest, String src1, String src2) {
         // and $1,$2,$3
@@ -395,12 +382,24 @@ public class MIPSParser {
 
     private void dump() {
         System.out.println("\npc = " + pc);
-        for (int i = 0; i < regNames.size(); ++i) {
+        for (int i = 0; i < regNames.size() - 1; ++i) { // don't wanna print the $zero register
             System.out.print("$" + regNames.get(i) + " = " + registers[i] + "\t\t");
             if ((i+1) % 4 == 0) {
                 System.out.println();
             }
         }
         System.out.println("\n");
+    }
+
+    private void memDump(int start, int end) {
+        if (start >= end) {
+            System.out.println("Please enter a valid range {start < end}");
+        } else {
+            System.out.println();
+            for (int i = start; i < end + 1 && i < mem.length; ++i) {
+                System.out.println("[" + i + "] = " + mem[i]);
+            }
+            System.out.println();
+        }
     }
 }
