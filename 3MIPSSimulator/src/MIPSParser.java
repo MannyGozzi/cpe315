@@ -100,12 +100,14 @@ public class MIPSParser {
     private void step(int steps) {
         if (steps < 0) {
             while (pc < commands.size()) {
+                //System.out.println("pc: " + pc + " " + commands.get(pc));
                 executeCommand(commands.get(pc));
                 //System.out.println("pc: " + pc);
             }
         } else {
             for (int i = 0; i < steps && pc < commands.size(); ++i) {
                 //System.out.println("pc: " + pc);
+                //System.out.println("pc: " + pc + " " + commands.get(pc));
                 executeCommand(commands.get(pc));
                 //System.out.println("pc: " + pc);
             }
@@ -223,7 +225,7 @@ public class MIPSParser {
 
     private void j(String label) {
         // j loop
-        pc = labelToLine.get(label) - 1;
+        pc = labelToLine.get(label);
     }
 
     private void jr(String src) {
@@ -276,10 +278,6 @@ public class MIPSParser {
             processCommand(command, lineNum);
             ++lineNum;
         }
-    }
-
-    private void processInteractiveCommand(String command) {
-        System.out.println("Processing command " + command);
     }
 
     private void processCommand(String command, int lineNum) {
