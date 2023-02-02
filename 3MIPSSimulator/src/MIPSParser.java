@@ -71,7 +71,7 @@ public class MIPSParser {
                 pc = 0;
                 mem = new int[8192];
                 registers = new int[32];
-                System.out.println("\t\tSimulator reset\n");
+                System.out.println("        Simulator reset\n");
             } else if (commands[0].equals("q")){
                 System.exit(1);
             }
@@ -109,7 +109,7 @@ public class MIPSParser {
                 executeCommand(commands.get(pc));
                 //System.out.println("pc: " + pc);
             }
-            System.out.println("\t\t" + steps + " instruction(s) executed");
+            System.out.println("        " + steps + " instruction(s) executed");
         }
     }
 
@@ -302,7 +302,7 @@ public class MIPSParser {
 
     private void printMapping() {
         for (String label : labelToLine.keySet()) {
-            System.out.print(label + ":\t " + labelToLine.get(label));
+            System.out.print(label + ":         " + labelToLine.get(label));
             System.out.println();
         }
     }
@@ -383,7 +383,9 @@ public class MIPSParser {
     private void dump() {
         System.out.println("\npc = " + pc);
         for (int i = 0; i < regNames.size() - 1; ++i) { // don't wanna print the $zero register
-            System.out.print("$" + regNames.get(i) + " = " + registers[i] + "\t\t");
+            String msg = "$" + regNames.get(i) + " = " + registers[i];
+            if ((i+1) % 4 != 0 && i != regNames.size() - 2) msg = padRightSpaces(msg, 16);
+            System.out.print(msg);
             if ((i+1) % 4 == 0) {
                 System.out.println();
             }
@@ -401,5 +403,18 @@ public class MIPSParser {
             }
             System.out.println();
         }
+    }
+
+    public String padRightSpaces(String inputString, int length) {
+        if (inputString.length() >= length) {
+            return inputString;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(inputString);
+        while (sb.length() < length) {
+            sb.append(' ');
+        }
+
+        return sb.toString();
     }
 }
