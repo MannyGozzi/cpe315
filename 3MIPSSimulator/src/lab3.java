@@ -1,4 +1,4 @@
-public class lab2 {
+public class lab3 {
     public static void main(String[] args) {
         String inputFile = args[0];
         MIPSParser parser = new MIPSParser();
