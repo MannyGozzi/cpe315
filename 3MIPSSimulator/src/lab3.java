@@ -8,7 +8,8 @@ public class lab3 {
         } else if (args.length > 1 && args[1] != null) {
             String script = args[1];
             parser.runInteractiveMode(inputFile, script);
+        } else {
+            parser.runInteractiveMode(inputFile, "");
         }
-        parser.runInteractiveMode(inputFile, "");
     }
 }
