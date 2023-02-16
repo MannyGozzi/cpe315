@@ -1,20 +1,54 @@
-# test2
-# CPI: 1.727 Cycles: 19 Instructions: 11
+# lab4_test1.asm
+#
+# CPI = 1.400	cycles = 42	instructions = 30
 
-j next		# 1 cycle penalty
-equal1:	add $a0, $0, $0
+# instructions with rd as destination
 
-next:	addi $a0, $0, 100
-	addi $a1, $0, 101
-	beq $a0, $a1, equal1	# fall through
-	addi $a0, $0, 101
-	beq $a0, $a1, equal2	# taken branch
-	lw $a0, 0($0)
-	lw $a0, 0($0)
-	lw $a0, 0($0)
+lw $a0, 0($a1)
+add $t0, $a0, $a1	# stall
 
-equal2:	add $a0, $0, $0
-  add $a0, $0, $0
-  add $a0, $0, $0
-  add $a0, $0, $0
-  add $a0, $0, $0
+lw $a0, 0($a1)
+add $t0, $a1, $a0	# stall
+
+lw $a0, 0($a1)
+add $t0, $t0, $t0	# no stall
+
+lw $a0, 0($a1)
+sub $t0, $a1, $a0	# stall
+
+lw $a0, 0($a1)
+sub $t0, $a0, $a1	# stall
+
+lw $a0, 0($a1)
+sub $t0, $t0, $t0	# no stall
+
+lw $a0, 0($a1)
+slt $t0, $a0, $a1	# stall
+
+lw $a0, 0($a1)
+slt $t0, $a1, $a0	# stall
+
+lw $a0, 0($a1)
+slt $t0, $t0, $t0	# no stall
+
+# instructions with rt as destination
+
+lw $a0, 0($a1)		# no stall
+addi $t0, $a1, 1
+
+lw $a0, 0($a1)		# stall
+addi $t0, $a0, 1
+
+lw $a0, 0($a1)		# no stall
+addi $a0, $t0, 1
+
+lw $a0, 0($a1)
+lw $a0, 0($a1)		# no stall
+
+lw $a0, 0($a1)
+lw $a1, 0($a0)		# stall
+
+lw $0, 0($s1)		# no stall
+add $s2, $s1, $0
+
+

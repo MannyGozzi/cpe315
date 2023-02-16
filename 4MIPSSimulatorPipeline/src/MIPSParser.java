@@ -10,6 +10,19 @@ Resources:
     https://opencores.org/projects/plasma/opcodes
     https://www.dsi.unive.it/~gasparetto/materials/MIPS_Instruction_Set.pdf
  */
+
+/*
+Current process
+1. run each instruction
+2.
+
+ */
+
+/*
+New process
+1. run each clock + increment pc
+2. don't move onto next instruction until previous instruction does not need to stall.
+ */
 public class MIPSParser {
     Map<String, Integer> labelToLine;
     String inputFile;
@@ -57,7 +70,7 @@ public class MIPSParser {
         while(input.hasNextLine()) {
             String inputString = input.nextLine();
             String[] commands = inputString.trim().split(" ");
-            if (!script.equals("")) System.out.println(inputString);
+            if (!script.equals("")) System.out.println(inputString + "\n");
             if (commands[0].equals("h")) {
                 printHelp();
             } else if (commands[0].equals("d")){
@@ -101,20 +114,11 @@ public class MIPSParser {
     Executes until program termination if steps = -1
      */
     private void step(int steps) {
-        if (steps < 0) {
-            while (pc < commands.size()) {
-                //System.out.println("pc: " + pc + " " + commands.get(pc));
-                executeCommand(commands.get(pc));
-                //System.out.println("pc: " + pc);
-            }
-        } else {
-            for (int i = 0; i < steps && pc < commands.size(); ++i) {
-                //System.out.println("pc: " + pc);
-                //System.out.println("pc: " + pc + " " + commands.get(pc));
-                executeCommand(commands.get(pc));
-                System.out.println("pc: " + pc);
-            }
-            //System.out.println("        " + steps + " instruction(s) executed");
+        for (int i = 0; i < steps && pc < commands.size(); ++i) {
+            //System.out.println("pc: " + pc);
+            //System.out.println("pc: " + pc + " " + commands.get(pc));
+            executeCommand(commands.get(pc));
+            //System.out.println("pc: " + pc);
             Pipeline.printPipeline(pc);
         }
     }
@@ -147,42 +151,42 @@ public class MIPSParser {
         // and $1,$2,$3
         int destIndex = regNames.indexOf(dest);
         registers[destIndex] = registers[regNames.indexOf(src1)] & registers[regNames.indexOf(src2)];
-        ++pc;
+        Pipeline.run("and", ++pc, src1, src2);
     }
 
     private void or(String dest, String src1, String src2) {
         // or $1,$2,$3
         int destIndex = regNames.indexOf(dest);
         registers[destIndex] = registers[regNames.indexOf(src1)] | registers[regNames.indexOf(src2)];
-        ++pc;
+        Pipeline.run("or", ++pc, src1, src2);
     }
 
     private void add(String dest, String src1, String src2) {
         // add $1,$2,$3
         int destIndex = regNames.indexOf(dest);
         registers[destIndex] = registers[regNames.indexOf(src1)] + registers[regNames.indexOf(src2)];
-        ++pc;
+        Pipeline.run("add", ++pc, src1, src2);
     }
 
     private void addi(String dest, String src1, String num1) {
         // addi $1,$2,100
         int destIndex = regNames.indexOf(dest);
         registers[destIndex] = registers[regNames.indexOf(src1)] + Integer.parseInt(num1);
-        ++pc;
+        Pipeline.run("addi", ++pc, src1, "");
     }
 
     private void sll(String dest, String src1, String num1) {
         // sll $1,$2,10
         int destIndex = regNames.indexOf(dest);
         registers[destIndex] = registers[regNames.indexOf(src1)] << Integer.parseInt(num1);
-        ++pc;
+        Pipeline.run("sll", ++pc, src1, "");
     }
 
     private void sub(String dest, String src1, String src2) {
         // sub $1,$2,$3
         int destIndex = regNames.indexOf(dest);
         registers[destIndex] = registers[regNames.indexOf(src1)] - registers[regNames.indexOf(src2)];
-        ++pc;
+        Pipeline.run("sub", ++pc, src1, src2);
     }
 
     private void slt(String dest, String src1, String src2) {
@@ -193,15 +197,16 @@ public class MIPSParser {
         } else {
             registers[destIndex] = 0;
         }
-        ++pc;
+        Pipeline.run("slt", ++pc, src1, src2);
     }
 
     private void beq(String src1, String src2, String label) {
         // beq $1,$2,end
         if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
             pc = labelToLine.get(label);
+            Pipeline.run("beq", pc, src1, src2);
         } else {
-            ++pc;
+            Pipeline.run("beq", ++pc, src1, src2);
         }
     }
 
@@ -209,8 +214,9 @@ public class MIPSParser {
         // bne $1,$2,end
         if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
             pc = labelToLine.get(label);
+            Pipeline.run("bne", pc, src1, src2);
         } else {
-            ++pc;
+            Pipeline.run("bne", ++pc, src1, src2);
         }
     }
 
@@ -218,30 +224,34 @@ public class MIPSParser {
         // lw $1,100($2)
         int destIndex = regNames.indexOf(dest);
         registers[destIndex] = mem[Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)]];
-        ++pc;
+        Pipeline.run("lw", ++pc, offsetSrc, "");
     }
 
     private void sw(String data, String offset, String offsetSrc) {
         // sw $1,100($2)
         int srcData = registers[regNames.indexOf(data)];
         mem[Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)]] = srcData;
-        ++pc;
+        Pipeline.run("sw", ++pc, offsetSrc, "");
     }
 
     private void j(String label) {
         // j loop
         pc = labelToLine.get(label);
+        Pipeline.run("j", pc, "", "");
     }
 
     private void jr(String src) {
         // jr $s1
         pc = registers[regNames.indexOf(src)];
+        Pipeline.run("jr", pc, src, "");
+
     }
 
-    private void jal(String src) {
+    private void jal(String label) {
         // jal fibonnaci
         registers[regNames.indexOf("ra")] = pc + 1;
-        pc = labelToLine.get(src);
+        pc = labelToLine.get(label);
+        Pipeline.run("jal", pc, "ra", "");
     }
 
     private void displayPrompt() {
