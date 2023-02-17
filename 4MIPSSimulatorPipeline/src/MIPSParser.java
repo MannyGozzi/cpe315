@@ -114,13 +114,22 @@ public class MIPSParser {
     Executes until program termination if steps = -1
      */
     private void step(int steps) {
-        for (int i = 0; i < steps && pc < commands.size(); ++i) {
-            //System.out.println("pc: " + pc);
-            //System.out.println("pc: " + pc + " " + commands.get(pc));
-            executeCommand(commands.get(pc));
-            //System.out.println("pc: " + pc);
-            Pipeline.printPipeline(pc);
+        if (steps < 0) {
+            while (pc < commands.size()) {
+                //System.out.println("pc: " + pc + " " + commands.get(pc));
+                executeCommand(commands.get(pc));
+                //System.out.println("pc: " + pc);
+            }
+        } else {
+            for (int i = 0; i < steps && pc < commands.size(); ++i) {
+                //System.out.println("pc: " + pc);
+                //System.out.println("pc: " + pc + " " + commands.get(pc));
+                executeCommand(commands.get(pc));
+                Pipeline.printPipeline(pc);
+            }
         }
+            //System.out.println("        " + steps + " instruction(s) executed");
+        if (pc == commands.size()) printProgramComplete();
     }
 
 
@@ -293,6 +302,7 @@ public class MIPSParser {
             processCommand(command, lineNum);
             ++lineNum;
         }
+        printProgramComplete();
     }
 
     private void processCommand(String command, int lineNum) {
@@ -429,5 +439,13 @@ public class MIPSParser {
         }
 
         return sb.toString();
+    }
+
+    public void printProgramComplete() {
+        System.out.println("Program Complete");
+        System.out.print(padRightSpaces("CPI = " + String.format("%.4f ", (float) clocks/commands.size()), 20));
+        System.out.print(padRightSpaces("Cycles = " + clocks, 15));
+        System.out.println(padRightSpaces(" Instructions = " + commands.size(), 10));
+        System.out.println();
     }
 }
