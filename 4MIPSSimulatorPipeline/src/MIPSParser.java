@@ -29,6 +29,7 @@ public class MIPSParser {
     Instruction inst = new Instruction();
     Register reg = new Register();
     ArrayList<String> commands = new ArrayList<>();
+    boolean isInstructionComplete = true;
 
     int[] registers = new int[32];
     ArrayList<String> regNames = new ArrayList<>(Arrays.asList("0", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "sp", "ra", "zero"));
@@ -158,109 +159,178 @@ public class MIPSParser {
 
     private void and(String dest, String src1, String src2) {
         // and $1,$2,$3
-        int destIndex = regNames.indexOf(dest);
-        registers[destIndex] = registers[regNames.indexOf(src1)] & registers[regNames.indexOf(src2)];
-        Pipeline.run("and", ++pc, src1, src2);
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            registers[destIndex] = registers[regNames.indexOf(src1)] & registers[regNames.indexOf(src2)];
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("and", dest, src1, src2)) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void or(String dest, String src1, String src2) {
         // or $1,$2,$3
-        int destIndex = regNames.indexOf(dest);
-        registers[destIndex] = registers[regNames.indexOf(src1)] | registers[regNames.indexOf(src2)];
-        Pipeline.run("or", ++pc, src1, src2);
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            registers[destIndex] = registers[regNames.indexOf(src1)] | registers[regNames.indexOf(src2)];
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("or", dest, src1, src2)) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void add(String dest, String src1, String src2) {
         // add $1,$2,$3
-        int destIndex = regNames.indexOf(dest);
-        registers[destIndex] = registers[regNames.indexOf(src1)] + registers[regNames.indexOf(src2)];
-        Pipeline.run("add", ++pc, src1, src2);
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            registers[destIndex] = registers[regNames.indexOf(src1)] + registers[regNames.indexOf(src2)];
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("add", dest, src1, src2)) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void addi(String dest, String src1, String num1) {
         // addi $1,$2,100
-        int destIndex = regNames.indexOf(dest);
-        registers[destIndex] = registers[regNames.indexOf(src1)] + Integer.parseInt(num1);
-        Pipeline.run("addi", ++pc, src1, "");
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            registers[destIndex] = registers[regNames.indexOf(src1)] + Integer.parseInt(num1);
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("addi", dest, src1, "")) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void sll(String dest, String src1, String num1) {
         // sll $1,$2,10
-        int destIndex = regNames.indexOf(dest);
-        registers[destIndex] = registers[regNames.indexOf(src1)] << Integer.parseInt(num1);
-        Pipeline.run("sll", ++pc, src1, "");
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            registers[destIndex] = registers[regNames.indexOf(src1)] << Integer.parseInt(num1);
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("sll", dest, src1, "")) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void sub(String dest, String src1, String src2) {
         // sub $1,$2,$3
-        int destIndex = regNames.indexOf(dest);
-        registers[destIndex] = registers[regNames.indexOf(src1)] - registers[regNames.indexOf(src2)];
-        Pipeline.run("sub", ++pc, src1, src2);
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            registers[destIndex] = registers[regNames.indexOf(src1)] - registers[regNames.indexOf(src2)];
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("sub", dest, src1, src2)) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void slt(String dest, String src1, String src2) {
         // slt $1,$2,$3
-        int destIndex = regNames.indexOf(dest);
-        if (registers[regNames.indexOf(src1)] < registers[regNames.indexOf(src2)]) {
-            registers[destIndex] = 1;
-        } else {
-            registers[destIndex] = 0;
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            if (registers[regNames.indexOf(src1)] < registers[regNames.indexOf(src2)]) {
+                registers[destIndex] = 1;
+            } else {
+                registers[destIndex] = 0;
+            }
+            isInstructionComplete = false;
         }
-        Pipeline.run("slt", ++pc, src1, src2);
+        if (Pipeline.run("slt", dest, src1, src2)) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void beq(String src1, String src2, String label) {
         // beq $1,$2,end
-        if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
+        if (isInstructionComplete) {
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("beq", "", src1, src2)) {
+            isInstructionComplete = true;
             pc = labelToLine.get(label);
-            Pipeline.run("beq", pc, src1, src2);
-        } else {
-            Pipeline.run("beq", ++pc, src1, src2);
         }
     }
 
     private void bne(String src1, String src2, String label) {
-        // bne $1,$2,end
-        if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
+        if (isInstructionComplete) {
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("bne", "", src1, src2)) {
+            isInstructionComplete = true;
             pc = labelToLine.get(label);
-            Pipeline.run("bne", pc, src1, src2);
-        } else {
-            Pipeline.run("bne", ++pc, src1, src2);
         }
     }
 
     private void lw(String dest, String offset, String offsetSrc) {
         // lw $1,100($2)
-        int destIndex = regNames.indexOf(dest);
-        registers[destIndex] = mem[Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)]];
-        Pipeline.run("lw", ++pc, offsetSrc, "");
+        if (isInstructionComplete) {
+            int destIndex = regNames.indexOf(dest);
+            registers[destIndex] = mem[Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)]];
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("lw", dest, offsetSrc, "")) {
+            isInstructionComplete = true;
+            ++pc;
+        }
     }
 
     private void sw(String data, String offset, String offsetSrc) {
         // sw $1,100($2)
-        int srcData = registers[regNames.indexOf(data)];
-        mem[Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)]] = srcData;
-        Pipeline.run("sw", ++pc, offsetSrc, "");
+        int store_address = Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)];
+        if (isInstructionComplete) {
+            isInstructionComplete = false;
+            int srcData = registers[regNames.indexOf(data)];
+            mem[store_address] = srcData;
+        }
+        if (Pipeline.run("sw", Integer.toString(store_address), offsetSrc, "")) {
+
+        }
     }
 
     private void j(String label) {
         // j loop
-        pc = labelToLine.get(label);
-        Pipeline.run("j", pc, "", "");
+        if (isInstructionComplete) {
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("j", "", "", "")) {
+            isInstructionComplete = true;
+            pc = labelToLine.get(label);
+        }
     }
 
     private void jr(String src) {
         // jr $s1
-        pc = registers[regNames.indexOf(src)];
-        Pipeline.run("jr", pc, src, "");
-
+        if (isInstructionComplete) {
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("jr", "", src, "")) {
+            isInstructionComplete = true;
+            pc = registers[regNames.indexOf(src)];
+        }
     }
 
     private void jal(String label) {
         // jal fibonnaci
-        registers[regNames.indexOf("ra")] = pc + 1;
-        pc = labelToLine.get(label);
-        Pipeline.run("jal", pc, "ra", "");
+        if (isInstructionComplete) {
+            isInstructionComplete = false;
+        }
+        if (Pipeline.run("jal", "", "ra", "")) {
+            isInstructionComplete = true;
+            registers[regNames.indexOf("ra")] = pc + 1;
+            pc = labelToLine.get(label);
+        }
     }
 
     private void displayPrompt() {

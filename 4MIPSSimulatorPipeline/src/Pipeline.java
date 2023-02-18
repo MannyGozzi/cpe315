@@ -10,6 +10,7 @@ public class Pipeline {
     //WB: Write back
     static final ArrayList<String> pipeline = new ArrayList<>(Arrays.asList("if/id", "id/exe", "exe/mem", "mem/wb"));
     static ArrayList<String> pipelineVals = new ArrayList<>(Arrays.asList("empty", "empty", "empty", "empty"));
+    static ArrayList<String> pipelineRegs = new ArrayList<>(Arrays.asList("empty", "empty", "empty", "empty"));
 
     // shifts values in pipeline 1 unit right
     private static void shiftPipelineRight() {
@@ -17,19 +18,49 @@ public class Pipeline {
             pipelineVals.set(i, pipelineVals.get(i - 1));
         }
     }
-    public static int run(String opcode, int pc, String requirement1, String requirement2) {
+
+    // shifts values in pipeline 1 unit right
+    private static void shiftPipelineRegRight() {
+        for (int i = pipelineRegs.size() - 1; i > 0; i--) {
+            pipelineRegs.set(i, pipelineRegs.get(i - 1));
+        }
+    }
+
+    public static boolean run(String opcode, String destination, String requirement1, String requirement2) {
         shiftPipelineRight();
-        pipelineVals.set(0, opcode);
-        if (needsToStall(opcode, requirement1, requirement2)) {
+        shiftPipelineRegRight();
+         else {
+            pipelineVals.set(0, opcode);
+            pipelineRegs.set(0, destination);
+            return true;
+        } if (needsToStall(opcode, requirement1, requirement2)) {
             pipelineVals.set(1, "stall");
             pipelineVals.set(0, opcode);
-            return pc;
+            pipelineRegs.set(0, destination);
+            pipelineRegs.set(1, "empty");
+            return false;
         }
-        return pc + 1;
     }
 
     private static boolean needsToStall(String opcode, String requirement1, String requirement2) {
-
+        switch (opcode) {
+            case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw" -> {
+                if (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2)) {
+                    return true;
+                }
+            }
+            case "beq", "bne" -> {
+                if (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2)) {
+                    return true;
+                }
+            }
+            case "j", "jr" -> {
+                if (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2)) {
+                    return true;
+                }
+            }
+            default -> {}
+        }
         return false;
     }
 
