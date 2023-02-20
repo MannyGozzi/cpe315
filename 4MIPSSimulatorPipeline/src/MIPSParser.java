@@ -12,15 +12,8 @@ Resources:
  */
 
 /*
-Current process
-1. run each instruction
-2.
-
- */
-
-/*
 New process
-1. run each clock + increment pc
+1. run each clock, increment pc after instruction is done running
 2. don't move onto next instruction until previous instruction does not need to stall.
  */
 public class MIPSParser {
@@ -36,7 +29,7 @@ public class MIPSParser {
     int[] mem = new int[8192];
 
     int pc = 0;
-    int pipelineStep = 0;
+    int inProgressPC = 0;
     int clocks = 0;
     public void parse(String inputFile) {
         this.inputFile = inputFile;
@@ -88,6 +81,7 @@ public class MIPSParser {
                 pc = 0;
                 mem = new int[8192];
                 registers = new int[32];
+                inProgressPC = 0;
                 System.out.println("        Simulator reset\n");
             } else if (commands[0].equals("q")){
                 System.exit(1);
@@ -126,11 +120,14 @@ public class MIPSParser {
                 //System.out.println("pc: " + pc);
                 //System.out.println("pc: " + pc + " " + commands.get(pc));
                 executeCommand(commands.get(pc));
-                Pipeline.printPipeline(pc);
+                Pipeline.printPipeline(inProgressPC);
             }
         }
             //System.out.println("        " + steps + " instruction(s) executed");
-        if (pc == commands.size()) printProgramComplete();
+        if (pc == commands.size()) {
+            clocks += 5;
+            printProgramComplete();
+        }
     }
 
 
@@ -163,6 +160,7 @@ public class MIPSParser {
             int destIndex = regNames.indexOf(dest);
             registers[destIndex] = registers[regNames.indexOf(src1)] & registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("and", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -176,6 +174,7 @@ public class MIPSParser {
             int destIndex = regNames.indexOf(dest);
             registers[destIndex] = registers[regNames.indexOf(src1)] | registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("or", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -189,6 +188,7 @@ public class MIPSParser {
             int destIndex = regNames.indexOf(dest);
             registers[destIndex] = registers[regNames.indexOf(src1)] + registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("add", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -202,6 +202,7 @@ public class MIPSParser {
             int destIndex = regNames.indexOf(dest);
             registers[destIndex] = registers[regNames.indexOf(src1)] + Integer.parseInt(num1);
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("addi", dest, src1, "")) {
             isInstructionComplete = true;
@@ -215,6 +216,7 @@ public class MIPSParser {
             int destIndex = regNames.indexOf(dest);
             registers[destIndex] = registers[regNames.indexOf(src1)] << Integer.parseInt(num1);
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("sll", dest, src1, "")) {
             isInstructionComplete = true;
@@ -228,6 +230,7 @@ public class MIPSParser {
             int destIndex = regNames.indexOf(dest);
             registers[destIndex] = registers[regNames.indexOf(src1)] - registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("sub", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -245,6 +248,7 @@ public class MIPSParser {
                 registers[destIndex] = 0;
             }
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("slt", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -256,6 +260,7 @@ public class MIPSParser {
         // beq $1,$2,end
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("beq", "", src1, src2)) {
             isInstructionComplete = true;
@@ -266,6 +271,7 @@ public class MIPSParser {
     private void bne(String src1, String src2, String label) {
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("bne", "", src1, src2)) {
             isInstructionComplete = true;
@@ -279,6 +285,7 @@ public class MIPSParser {
             int destIndex = regNames.indexOf(dest);
             registers[destIndex] = mem[Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)]];
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("lw", dest, offsetSrc, "")) {
             isInstructionComplete = true;
@@ -293,9 +300,11 @@ public class MIPSParser {
             isInstructionComplete = false;
             int srcData = registers[regNames.indexOf(data)];
             mem[store_address] = srcData;
+            ++inProgressPC;
         }
         if (Pipeline.run("sw", Integer.toString(store_address), offsetSrc, "")) {
-
+            isInstructionComplete = true;
+            ++pc;
         }
     }
 
@@ -303,6 +312,7 @@ public class MIPSParser {
         // j loop
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("j", "", "", "")) {
             isInstructionComplete = true;
@@ -314,6 +324,7 @@ public class MIPSParser {
         // jr $s1
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("jr", "", src, "")) {
             isInstructionComplete = true;
@@ -325,6 +336,7 @@ public class MIPSParser {
         // jal fibonnaci
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            ++inProgressPC;
         }
         if (Pipeline.run("jal", "", "ra", "")) {
             isInstructionComplete = true;
