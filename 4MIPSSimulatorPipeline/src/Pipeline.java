@@ -53,7 +53,7 @@ public class Pipeline {
     private static boolean needsToStall(String opcode, String requirement1, String requirement2) {
         switch (opcode) {
             case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw" -> {
-                if (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2)) {
+                if (pipeLineOps.get(1).equals("lw") && (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2))) {
                     return true;
                 }
             }
@@ -72,18 +72,37 @@ public class Pipeline {
         return false;
     }
 
+//    public static void printPipeline(int pc) {
+//        int spacing = 10;
+//        System.out.print(padRightSpaces("pc", spacing));
+//        for (String s : pipeline) {
+//            System.out.print(padRightSpaces(s, spacing));
+//        }
+//        System.out.println();
+//        System.out.print(padRightSpaces(Integer.toString(pc), spacing));
+//        for (String pipelineVal : pipeLineOps) {
+//            System.out.print(padRightSpaces(pipelineVal, spacing));
+//        }
+//        System.out.println("\n");
+//        /*System.out.print(padRightSpaces("dest.", spacing));
+//        for (String pipelineReg : pipelineRegs) {
+//            System.out.print(padRightSpaces(pipelineReg, spacing));
+//        }
+//        System.out.println("\n");
+//         */
+//    }
+
     public static void printPipeline(int pc) {
-        int spacing = 10;
-        System.out.print(padRightSpaces("pc", spacing));
+        System.out.print("pc\t");
         for (String s : pipeline) {
-            System.out.print(padRightSpaces(s, spacing));
+            System.out.print(s + "\t");
         }
-        System.out.println();
-        System.out.print(padRightSpaces(Integer.toString(pc), spacing));
+        System.out.println("\r");
+        System.out.print(pc + "\t");
         for (String pipelineVal : pipeLineOps) {
-            System.out.print(padRightSpaces(pipelineVal, spacing));
+            System.out.print(pipelineVal + "\t");
         }
-        System.out.println();
+        System.out.println("\r\n\r");
         /*System.out.print(padRightSpaces("dest.", spacing));
         for (String pipelineReg : pipelineRegs) {
             System.out.print(padRightSpaces(pipelineReg, spacing));

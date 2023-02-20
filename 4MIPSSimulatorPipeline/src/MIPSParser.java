@@ -524,10 +524,10 @@ public class MIPSParser {
     }
 
     public void printProgramComplete() {
-        System.out.println("Program Complete");
-        System.out.print(padRightSpaces("CPI = " + String.format("%.4f ", (float) clocks/commands.size()), 20));
-        System.out.print(padRightSpaces("Cycles = " + clocks, 15));
-        System.out.println(padRightSpaces(" Instructions = " + commands.size(), 10));
+        System.out.println("\n\rProgram complete");
+        System.out.print("CPI = " + String.format("%.3f ", (float) clocks/commands.size()) + "\t");
+        System.out.print("Cycles = " + clocks + "\t");
+        System.out.println(" Instructions = " + commands.size() + "\t");
         System.out.println();
     }
 }
