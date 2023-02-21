@@ -50,6 +50,7 @@ public class Pipeline {
             parser.setPc(latentJumpLocation - 1);
             parser.setInProgressPC(latentJumpLocation);
             latentSquashCount = 0;
+            return true;
         } else if (shouldStall) {
             pipeLineOps.set(1, "stall");
             pipelineRegs.set(1, "empty");
@@ -112,7 +113,7 @@ public class Pipeline {
             case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw" -> {
                 String pipelineValue = pipelineRegs.get(1);
                 if (pipelineValue.equals("empty")) return false;
-                if (pipelineValue.equals("lw") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
+                if ( (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
                     return true;
                 }
             }
