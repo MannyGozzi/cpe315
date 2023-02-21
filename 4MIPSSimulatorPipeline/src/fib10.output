@@ -1,0 +1,84 @@
+mips> s
+
+pc	if/id	id/exe	exe/mem	mem/wb	
+1	addi	empty	empty	empty	
+
+mips> s
+
+pc	if/id	id/exe	exe/mem	mem/wb	
+2	addi	addi	empty	empty	
+
+mips> s
+
+pc	if/id	id/exe	exe/mem	mem/wb	
+3	jal	addi	addi	empty	
+
+mips> s
+
+pc	if/id	id/exe	exe/mem	mem/wb	
+4	j	jal	addi	addi	
+
+mips> s
+
+pc	if/id	id/exe	exe/mem	mem/wb	
+23	squash	j	jal	addi	
+
+mips> s
+
+pc	if/id	id/exe	exe/mem	mem/wb	
+24	add	squash	j	jal	
+
+
+Program complete
+CPI = 0.500 	Cycles = 11	 Instructions = 22	
+
+mips> s
+
+
+Program complete
+CPI = 0.727 	Cycles = 16	 Instructions = 22	
+
+mips> s
+
+
+Program complete
+CPI = 0.955 	Cycles = 21	 Instructions = 22	
+
+mips> s
+
+
+Program complete
+CPI = 1.182 	Cycles = 26	 Instructions = 22	
+
+mips> s
+
+
+Program complete
+CPI = 1.409 	Cycles = 31	 Instructions = 22	
+
+mips> s
+
+
+Program complete
+CPI = 1.636 	Cycles = 36	 Instructions = 22	
+
+mips> s
+
+
+Program complete
+CPI = 1.864 	Cycles = 41	 Instructions = 22	
+
+mips> s
+
+
+Program complete
+CPI = 2.091 	Cycles = 46	 Instructions = 22	
+
+mips> r
+
+
+Program complete
+CPI = 2.318 	Cycles = 51	 Instructions = 22	
+
+mips> q
+

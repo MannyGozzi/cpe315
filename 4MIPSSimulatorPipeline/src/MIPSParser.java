@@ -26,10 +26,10 @@ public class MIPSParser {
     int[] registers = new int[32];
     ArrayList<String> regNames = new ArrayList<>(Arrays.asList("0", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "sp", "ra", "zero"));
     int[] mem = new int[8192];
-    int instructionDecrease = 0;
+    int instructions = 0;
     int pc = 0;
     int inProgressPC = 0;
-    int clocks = 0;
+    int cycles = 0;
     public void parse(String inputFile) {
         this.inputFile = inputFile;
         labelToLine = new TreeMap<>();
@@ -113,11 +113,13 @@ public class MIPSParser {
                 //System.out.println("pc: " + pc + " " + commands.get(pc));
                 executeCommand(commands.get(pc));
                 //System.out.println("pc: " + pc);
+                Pipeline.printPipeline(inProgressPC);
+
             }
         } else {
             for (int i = 0; i < steps && pc < commands.size(); ++i) {
                 //System.out.println("pc: " + pc);
-                //System.out.println("pc: " + pc + " " + commands.get(pc));
+                // System.out.println("pc: " + pc + " " + commands.get(pc));
                 // System.out.println(commands.get(pc) + " pc: " + pc);
                 executeCommand(commands.get(pc));
                 Pipeline.printPipeline(inProgressPC);
@@ -125,7 +127,7 @@ public class MIPSParser {
         }
             //System.out.println("        " + steps + " instruction(s) executed");
         if (pc == commands.size()) {
-            clocks += 5;
+            cycles += 5;
             printProgramComplete();
         }
     }
@@ -151,7 +153,7 @@ public class MIPSParser {
             case "jr" -> jr(tokens[1]);
             case "jal" -> jal(tokens[1]);
         }
-        ++clocks;
+        ++cycles;
     }
 
     private void and(String dest, String src1, String src2) {
@@ -161,6 +163,7 @@ public class MIPSParser {
             registers[destIndex] = registers[regNames.indexOf(src1)] & registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("and", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -175,6 +178,7 @@ public class MIPSParser {
             registers[destIndex] = registers[regNames.indexOf(src1)] | registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("or", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -189,6 +193,7 @@ public class MIPSParser {
             registers[destIndex] = registers[regNames.indexOf(src1)] + registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("add", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -203,6 +208,7 @@ public class MIPSParser {
             registers[destIndex] = registers[regNames.indexOf(src1)] + Integer.parseInt(num1);
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("addi", dest, src1, "")) {
             isInstructionComplete = true;
@@ -217,6 +223,7 @@ public class MIPSParser {
             registers[destIndex] = registers[regNames.indexOf(src1)] << Integer.parseInt(num1);
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("sll", dest, src1, "")) {
             isInstructionComplete = true;
@@ -231,6 +238,7 @@ public class MIPSParser {
             registers[destIndex] = registers[regNames.indexOf(src1)] - registers[regNames.indexOf(src2)];
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("sub", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -249,6 +257,7 @@ public class MIPSParser {
             }
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("slt", dest, src1, src2)) {
             isInstructionComplete = true;
@@ -261,6 +270,8 @@ public class MIPSParser {
         if (isInstructionComplete) {
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
+
         }
         if (Pipeline.run("beq", src1 + " " + src2 + " " + label, src1, src2)) {
             isInstructionComplete = true;
@@ -268,7 +279,8 @@ public class MIPSParser {
             if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
                 //pc = labelToLine.get(label);
                 // dump();
-                instructionDecrease += 3;
+                instructions -= 3;
+                ++cycles;
             }
             ++pc;
         }
@@ -278,6 +290,7 @@ public class MIPSParser {
         if (isInstructionComplete) {
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         // stores the dependencies in the destination register
         if (Pipeline.run("bne", src1 + " " + src2 + " " + label, src1, src2)) {
@@ -285,7 +298,8 @@ public class MIPSParser {
             Pipeline.addRegisterRestore(registers.clone());
             if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
                 //pc = labelToLine.get(label);
-                instructionDecrease += 3;
+                instructions -= 3;
+                ++cycles; // god knows why we have to increment cycles here
             }
             ++pc;
         }
@@ -298,6 +312,7 @@ public class MIPSParser {
             registers[destIndex] = mem[Integer.parseInt(offset) + registers[regNames.indexOf(offsetSrc)]];
             isInstructionComplete = false;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("lw", dest, offsetSrc, "")) {
             isInstructionComplete = true;
@@ -313,6 +328,7 @@ public class MIPSParser {
             int srcData = registers[regNames.indexOf(data)];
             mem[store_address] = srcData;
             ++inProgressPC;
+            ++instructions;
         }
         if (Pipeline.run("sw", Integer.toString(store_address), offsetSrc, "")) {
             isInstructionComplete = true;
@@ -323,9 +339,10 @@ public class MIPSParser {
     private void j(String label) {
         // j loop
         ++inProgressPC;
+        ++instructions;
         if (Pipeline.run("j", "", "", "")) {
             Pipeline.setLatentJumpLocation(labelToLine.get(label));
-            instructionDecrease += 1;
+            instructions -= 1;
         }
         pc++;
 
@@ -334,9 +351,10 @@ public class MIPSParser {
     private void jr(String src) {
         // jr $s1
         ++inProgressPC;
+        ++instructions;
         if (Pipeline.run("jr", "", src, "")) {
            Pipeline.setLatentJumpLocation(registers[regNames.indexOf(src)]);
-           instructionDecrease += 1;
+           instructions -= 1;
         }
         pc++;
     }
@@ -344,10 +362,11 @@ public class MIPSParser {
     private void jal(String label) {
         // jal fibonnaci
         ++inProgressPC;
+        ++instructions;
         if (Pipeline.run("jal", "", "ra", "")) {
             registers[regNames.indexOf("ra")] = pc + 1;
             Pipeline.setLatentJumpLocation(labelToLine.get(label));
-            instructionDecrease += 1;
+            instructions -= 1;
         }
         pc++;
     }
@@ -532,9 +551,9 @@ public class MIPSParser {
 
     public void printProgramComplete() {
         System.out.println("\n\rProgram complete");
-        System.out.print("CPI = " + String.format("%.3f ", (float) clocks/(commands.size() - instructionDecrease)) + "\t");
-        System.out.print("Cycles = " + clocks + "\t");
-        System.out.println(" Instructions = " + (commands.size() - instructionDecrease) + "\t");
+        System.out.print("CPI = " + String.format("%.3f ", (float) cycles /instructions) + "\t");
+        System.out.print("Cycles = " + cycles + "\t");
+        System.out.println(" Instructions = " + instructions + "\t");
         System.out.println();
     }
 

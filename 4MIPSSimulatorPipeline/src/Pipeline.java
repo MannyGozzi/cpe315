@@ -119,8 +119,8 @@ public class Pipeline {
         switch (opcode) {
             case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw" -> {
                 String pipelineValue = pipelineRegs.get(1);
-                if (pipelineValue.equals("empty")) return false;
-                if ( (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
+                if (pipelineRegs.get(1).equals("empty")) return false;
+                if ( pipeLineOps.get(1).equals("lw") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
                     return true;
                 }
             }
@@ -130,6 +130,7 @@ public class Pipeline {
             case "j", "jr", "jal" -> {
                 if (latentSquashCount == 4) {
                     latentSquashCount--;
+                    // destroy any jump command because a jump is already in place
                 } else { latentSquashCount = 5;}
                 // 5 is used as code for squashing for jal, jr, and j
                 return false;
