@@ -2,6 +2,7 @@ public class lab4 {
     public static void main(String[] args) {
         String inputFile = args[0];
         MIPSParser parser = new MIPSParser();
+        Pipeline.setParser(parser);
         if (inputFile == null) {
             System.out.println("Please provide an input file");
             return;

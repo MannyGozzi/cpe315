@@ -1,5 +1,4 @@
 import java.io.*;
-import java.nio.channels.Pipe;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +26,7 @@ public class MIPSParser {
     int[] registers = new int[32];
     ArrayList<String> regNames = new ArrayList<>(Arrays.asList("0", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "sp", "ra", "zero"));
     int[] mem = new int[8192];
-
+    int instructionDecrease = 0;
     int pc = 0;
     int inProgressPC = 0;
     int clocks = 0;
@@ -119,6 +118,7 @@ public class MIPSParser {
             for (int i = 0; i < steps && pc < commands.size(); ++i) {
                 //System.out.println("pc: " + pc);
                 //System.out.println("pc: " + pc + " " + commands.get(pc));
+                // System.out.println(commands.get(pc) + " pc: " + pc);
                 executeCommand(commands.get(pc));
                 Pipeline.printPipeline(inProgressPC);
             }
@@ -262,9 +262,17 @@ public class MIPSParser {
             isInstructionComplete = false;
             ++inProgressPC;
         }
-        if (Pipeline.run("beq", "", src1, src2)) {
+        if (Pipeline.run("beq", src1 + " " + src2 + " " + label, src1, src2)) {
             isInstructionComplete = true;
-            pc = labelToLine.get(label);
+            Pipeline.addRegisterRestore(registers);
+            if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
+                //pc = labelToLine.get(label);
+                // dump();
+                instructionDecrease += 3;
+            } else {
+                // System.out.println("not equal");
+            }
+            ++pc;
         }
     }
 
@@ -273,9 +281,16 @@ public class MIPSParser {
             isInstructionComplete = false;
             ++inProgressPC;
         }
-        if (Pipeline.run("bne", "", src1, src2)) {
+        // stores the dependencies in the destination register
+        if (Pipeline.run("bne", src1 + " " + src2 + " " + label, src1, src2)) {
             isInstructionComplete = true;
-            pc = labelToLine.get(label);
+            Pipeline.addRegisterRestore(registers.clone());
+            if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
+                //pc = labelToLine.get(label);
+                // dump();
+                instructionDecrease += 3;
+            }
+            ++pc;
         }
     }
 
@@ -312,11 +327,13 @@ public class MIPSParser {
         // j loop
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            instructionDecrease += 1;
             ++inProgressPC;
         }
         if (Pipeline.run("j", "", "", "")) {
             isInstructionComplete = true;
-            pc = labelToLine.get(label);
+            Pipeline.setLatentJumpLocation(labelToLine.get(label));
+            pc++;
         }
     }
 
@@ -324,11 +341,13 @@ public class MIPSParser {
         // jr $s1
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            instructionDecrease += 1;
             ++inProgressPC;
         }
         if (Pipeline.run("jr", "", src, "")) {
             isInstructionComplete = true;
-            pc = registers[regNames.indexOf(src)];
+            Pipeline.setLatentJumpLocation(registers[regNames.indexOf(src)]);
+            pc++;
         }
     }
 
@@ -336,12 +355,14 @@ public class MIPSParser {
         // jal fibonnaci
         if (isInstructionComplete) {
             isInstructionComplete = false;
+            instructionDecrease += 1;
             ++inProgressPC;
         }
         if (Pipeline.run("jal", "", "ra", "")) {
             isInstructionComplete = true;
             registers[regNames.indexOf("ra")] = pc + 1;
-            pc = labelToLine.get(label);
+            Pipeline.setLatentJumpLocation(labelToLine.get(label));
+            pc++;
         }
     }
 
@@ -525,9 +546,35 @@ public class MIPSParser {
 
     public void printProgramComplete() {
         System.out.println("\n\rProgram complete");
-        System.out.print("CPI = " + String.format("%.3f ", (float) clocks/commands.size()) + "\t");
+        System.out.print("CPI = " + String.format("%.3f ", (float) clocks/(commands.size() - instructionDecrease)) + "\t");
         System.out.print("Cycles = " + clocks + "\t");
-        System.out.println(" Instructions = " + commands.size() + "\t");
+        System.out.println(" Instructions = " + (commands.size() - instructionDecrease) + "\t");
         System.out.println();
+    }
+
+    public int[] getRegisters() {
+        return registers;
+    }
+
+    public ArrayList<String> getRegNames() {
+        return regNames;
+    }
+
+    public void setPc(int pc) {
+        this.pc = pc;
+    }
+
+    public int getPc() {
+        return pc;
+    }
+
+
+
+    public void setInProgressPC(int pc) {
+        this.inProgressPC = pc;
+    }
+
+    public void setRegisters(int[] registers) {
+        this.registers = Arrays.copyOf(registers, 32);
     }
 }

@@ -1,5 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 public class Pipeline {
     //IF: Instruction fetch
@@ -11,6 +10,11 @@ public class Pipeline {
     static ArrayList<String> pipeLineOps = new ArrayList<>(Arrays.asList("empty", "empty", "empty", "empty"));
     static ArrayList<String> pipelineRegs = new ArrayList<>(Arrays.asList("empty", "empty", "empty", "empty"));
 
+    static MIPSParser parser;
+    static int latentSquashCount = 0;
+    static int latentJumpLocation = 0;
+
+    public static Queue<int[]> registerRestores = new LinkedList<>();
     // shifts values in pipeline 1 unit right
     private static void shiftPipelineRight() {
         for (int i = pipeLineOps.size() - 1; i > 0; i--) {
@@ -31,15 +35,28 @@ public class Pipeline {
      */
     public static boolean run(String opcode, String destination, String requirement1, String requirement2) {
         boolean shouldStall = needsToStall(opcode, requirement1, requirement2);
+        String op = pipeLineOps.get(3);
         shiftPipelineRight();
         shiftPipelineRegRight();
         pipeLineOps.set(0, opcode);
         pipelineRegs.set(0, destination);
-        if (shouldStall) {
+        handleBeqBne();
+        if (latentSquashCount == 5) {
+            latentSquashCount--;
+            return true;
+        } else if (latentSquashCount == 4) {
+            pipeLineOps.set(0, "squash");
+            pipelineRegs.set(0, "empty");
+            parser.setPc(latentJumpLocation - 1);
+            parser.setInProgressPC(latentJumpLocation);
+            latentSquashCount = 0;
+        } else if (shouldStall) {
             pipeLineOps.set(1, "stall");
             pipelineRegs.set(1, "empty");
-            //System.out.println("Should stall");
+            // System.out.println("Should stall");
             // should insert a stall, but we return true in order to indicate an instruction is complete
+            return true;
+        } else if (op.equals("beq") || op.equals("bne")) {
             return true;
         }
         shouldStall = needsToStall(opcode, requirement1, requirement2);
@@ -50,22 +67,62 @@ public class Pipeline {
         return true;
     }
 
+    private static void handleBeqBne() {
+        String op = pipeLineOps.get(3);
+        if (!op.equals("beq") && !op.equals("bne")) return;
+        String args = pipelineRegs.get(3);
+        String[] splitArgs = args.split(" ");
+        ArrayList<String> regNames = parser.getRegNames();
+        String src1 = splitArgs[0];
+        String src2 = splitArgs[1];
+        String label = splitArgs[2];
+        int[] registers = registerRestores.remove();
+        if (op.equals("bne")) {
+            if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
+                parser.setPc(parser.labelToLine.get(label));
+                parser.setInProgressPC(parser.labelToLine.get(label));
+                squash3();
+                parser.setRegisters(registers);
+                // System.out.println("JUMPING BNE " + args);
+            }
+        }
+        if (op.equals("beq")) {
+            if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
+                parser.setPc(parser.labelToLine.get(label));
+                parser.setInProgressPC(parser.labelToLine.get(label));
+                squash3();
+                // System.out.println("JUMPING BEQ " + args);
+                // dumpRegisters(registers);
+                parser.setRegisters(registers);
+            }
+        }
+    }
+
+    private static void squash3() {
+        pipeLineOps.set(0, "squash");
+        pipelineRegs.set(0, "empty");
+        pipeLineOps.set(1, "squash");
+        pipelineRegs.set(1, "empty");
+        pipeLineOps.set(2, "squash");
+        pipelineRegs.set(2, "empty");
+    }
+
     private static boolean needsToStall(String opcode, String requirement1, String requirement2) {
         switch (opcode) {
             case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw" -> {
-                if (pipeLineOps.get(1).equals("lw") && (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2))) {
+                String pipelineValue = pipelineRegs.get(1);
+                if (pipelineValue.equals("empty")) return false;
+                if (pipelineValue.equals("lw") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
                     return true;
                 }
             }
             case "beq", "bne" -> {
-                if (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2)) {
-                    return true;
-                }
+                return false;
             }
-            case "j", "jr" -> {
-                if (pipelineRegs.get(1).equals(requirement1) || pipelineRegs.get(1).equals(requirement2)) {
-                    return true;
-                }
+            case "j", "jr", "jal" -> {
+                latentSquashCount = 5;
+                // 5 is used as code for squashing for jal, jr, and j
+                return false;
             }
             default -> {}
         }
@@ -122,5 +179,30 @@ public class Pipeline {
         }
 
         return sb.toString();
+    }
+
+    public static void setParser(MIPSParser mipsParser) {
+        parser = mipsParser;
+    }
+
+    public static void setLatentJumpLocation(int latentJumpLocation) {
+        Pipeline.latentJumpLocation = latentJumpLocation;
+    }
+
+    private static void dumpRegisters(int[] registers) {
+        System.out.println("\npc = " + parser.getPc());
+        for (int i = 0; i < parser.getRegNames().size() - 1; ++i) { // don't wanna print the $zero register
+            String msg = "$" + parser.getRegNames().get(i) + " = " + registers[i];
+            if ((i+1) % 4 != 0 && i != parser.getRegNames().size() - 2) msg = padRightSpaces(msg, 16);
+            System.out.print(msg);
+            if ((i+1) % 4 == 0) {
+                System.out.println();
+            }
+        }
+        System.out.println("\n");
+    }
+
+    public static void addRegisterRestore(int[] registers) {
+        registerRestores.add(registers.clone());
     }
 }
