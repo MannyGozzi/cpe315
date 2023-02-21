@@ -1,73 +1,73 @@
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-1	j	empty	empty	empty	
+1	lw	empty	empty	empty	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-2	squash	j	empty	empty	
+2	add	lw	empty	empty	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-3	addi	squash	j	empty	
+2	add	stall	lw	empty	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-4	addi	addi	squash	j	
+3	lw	add	stall	lw	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-5	beq	addi	addi	squash	
+4	add	lw	add	stall	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-6	addi	beq	addi	addi	
+4	add	stall	lw	add	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-7	beq	addi	beq	addi	
+5	lw	add	stall	lw	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-8	lw	beq	addi	beq	
+6	add	lw	add	stall	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-9	lw	lw	beq	addi	
+7	lw	add	lw	add	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-10	squash	squash	squash	beq	
+8	sub	lw	add	lw	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-11	add	squash	squash	squash	
+8	sub	stall	lw	add	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-12	add	add	squash	squash	
+9	lw	sub	stall	lw	
 
 mips> s
 
 pc	if/id	id/exe	exe/mem	mem/wb	
-13	add	add	add	squash	
+10	sub	lw	sub	stall	
 
 mips> r
 
 
 Program complete
-CPI = 1.727 	Cycles = 19	 Instructions = 11	
+CPI = 1.400 	Cycles = 42	 Instructions = 30	
 
 mips> q
 

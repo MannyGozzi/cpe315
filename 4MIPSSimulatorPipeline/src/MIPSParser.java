@@ -24,6 +24,7 @@ public class MIPSParser {
     boolean isInstructionComplete = true;
 
     int[] registers = new int[32];
+    int count = 0;
     ArrayList<String> regNames = new ArrayList<>(Arrays.asList("0", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "sp", "ra", "zero"));
     int[] mem = new int[8192];
     int instructions = 0;
@@ -35,7 +36,7 @@ public class MIPSParser {
         labelToLine = new TreeMap<>();
         firstPass();
         // printMapping();
-         printCommands();
+        // printCommands();
         // secondPass();
     }
 
@@ -111,23 +112,25 @@ public class MIPSParser {
         if (steps < 0) {
             while (pc < commands.size()) {
                 //System.out.println("pc: " + pc + " " + commands.get(pc));
+                System.out.println(commands.get(pc));
+                System.out.println(++count);
                 executeCommand(commands.get(pc));
                 //System.out.println("pc: " + pc);
                 Pipeline.printPipeline(inProgressPC);
-
             }
         } else {
             for (int i = 0; i < steps && pc < commands.size(); ++i) {
                 //System.out.println("pc: " + pc);
                 // System.out.println("pc: " + pc + " " + commands.get(pc));
-                // System.out.println(commands.get(pc) + " pc: " + pc);
+                System.out.println(commands.get(pc));
+                System.out.println(++count);
                 executeCommand(commands.get(pc));
                 Pipeline.printPipeline(inProgressPC);
             }
         }
             //System.out.println("        " + steps + " instruction(s) executed");
         if (pc == commands.size()) {
-            cycles += 5;
+            cycles += 4;
             printProgramComplete();
         }
     }
@@ -404,14 +407,13 @@ public class MIPSParser {
     /*
     Performs the MIPS to binary conversion utilizing the labels from the firstPass()
      */
-    private void secondPass() {
-        int lineNum = 0;
-        for (String command : commands) {
-            processCommand(command, lineNum);
-            ++lineNum;
-        }
-        printProgramComplete();
-    }
+//    private void secondPass() {
+//        int lineNum = 0;
+//        for (String command : commands) {
+//            processCommand(command, lineNum);
+//            ++lineNum;
+//        }
+//    }
 
     private void processCommand(String command, int lineNum) {
         if (command.charAt(0) == '#') return;
@@ -504,12 +506,12 @@ public class MIPSParser {
         }
     }
 
-    private void printTokens(String[] tokens) {
-        for (String token : tokens) {
-            System.out.print(token + " ");
-        }
-        System.out.println();
-    }
+//    private void printTokens(String[] tokens) {
+//        for (String token : tokens) {
+//            System.out.print(token + " ");
+//        }
+//        System.out.println();
+//    }
 
     private void dump() {
         System.out.println("\npc = " + pc);
@@ -557,10 +559,6 @@ public class MIPSParser {
         System.out.println();
     }
 
-    public int[] getRegisters() {
-        return registers;
-    }
-
     public ArrayList<String> getRegNames() {
         return regNames;
     }
@@ -569,12 +567,6 @@ public class MIPSParser {
         this.pc = pc;
     }
 
-    public int getPc() {
-        return pc;
-    }
-
-
-
     public void setInProgressPC(int pc) {
         this.inProgressPC = pc;
     }
@@ -582,4 +574,5 @@ public class MIPSParser {
     public void setRegisters(int[] registers) {
         this.registers = Arrays.copyOf(registers, 32);
     }
+
 }

@@ -200,19 +200,6 @@ public class Pipeline {
         Pipeline.latentJumpLocation = latentJumpLocation;
     }
 
-    private static void dumpRegisters(int[] registers) {
-        System.out.println("\npc = " + parser.getPc());
-        for (int i = 0; i < parser.getRegNames().size() - 1; ++i) { // don't wanna print the $zero register
-            String msg = "$" + parser.getRegNames().get(i) + " = " + registers[i];
-            if ((i+1) % 4 != 0 && i != parser.getRegNames().size() - 2) msg = padRightSpaces(msg, 16);
-            System.out.print(msg);
-            if ((i+1) % 4 == 0) {
-                System.out.println();
-            }
-        }
-        System.out.println("\n");
-    }
-
     public static void addRegisterRestore(int[] registers) {
         registerRestores.add(registers.clone());
     }
