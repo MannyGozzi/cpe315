@@ -30,8 +30,8 @@ public class Pipeline {
     }
 
     /*
-    returns true when the instruction is complete,
-    false when the instruction is not complete
+    returns true when the instruction is completed,
+    false when the instruction is not completed
      */
     public static boolean run(String opcode, String destination, String requirement1, String requirement2) {
         boolean shouldStall = needsToStall(opcode, requirement1, requirement2);
@@ -41,7 +41,14 @@ public class Pipeline {
         pipeLineOps.set(0, opcode);
         pipelineRegs.set(0, destination);
         handleBeqBne();
-        if (latentSquashCount == 5) {
+        if (latentSquashCount == 3) {
+            pipeLineOps.set(0, "squash");
+            pipelineRegs.set(0, "empty");
+            parser.setPc(latentJumpLocation - 1);
+            parser.setInProgressPC(latentJumpLocation);
+            latentSquashCount = 0;
+            return false;
+        } else if (latentSquashCount == 5) {
             latentSquashCount--;
             return true;
         } else if (latentSquashCount == 4) {
@@ -80,7 +87,7 @@ public class Pipeline {
         int[] registers = registerRestores.remove();
         if (op.equals("bne")) {
             if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
-                parser.setPc(parser.labelToLine.get(label));
+                parser.setPc(parser.labelToLine.get(label) - 1);
                 parser.setInProgressPC(parser.labelToLine.get(label));
                 squash3();
                 parser.setRegisters(registers);
@@ -89,7 +96,7 @@ public class Pipeline {
         }
         if (op.equals("beq")) {
             if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
-                parser.setPc(parser.labelToLine.get(label));
+                parser.setPc(parser.labelToLine.get(label) - 1);
                 parser.setInProgressPC(parser.labelToLine.get(label));
                 squash3();
                 // System.out.println("JUMPING BEQ " + args);
@@ -121,7 +128,9 @@ public class Pipeline {
                 return false;
             }
             case "j", "jr", "jal" -> {
-                latentSquashCount = 5;
+                if (latentSquashCount == 4) {
+                    latentSquashCount--;
+                } else { latentSquashCount = 5;}
                 // 5 is used as code for squashing for jal, jr, and j
                 return false;
             }

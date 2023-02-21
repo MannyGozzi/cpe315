@@ -35,7 +35,7 @@ public class MIPSParser {
         labelToLine = new TreeMap<>();
         firstPass();
         // printMapping();
-        // printCommands();
+         printCommands();
         // secondPass();
     }
 
@@ -269,8 +269,6 @@ public class MIPSParser {
                 //pc = labelToLine.get(label);
                 // dump();
                 instructionDecrease += 3;
-            } else {
-                // System.out.println("not equal");
             }
             ++pc;
         }
@@ -287,7 +285,6 @@ public class MIPSParser {
             Pipeline.addRegisterRestore(registers.clone());
             if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
                 //pc = labelToLine.get(label);
-                // dump();
                 instructionDecrease += 3;
             }
             ++pc;
@@ -325,45 +322,34 @@ public class MIPSParser {
 
     private void j(String label) {
         // j loop
-        if (isInstructionComplete) {
-            isInstructionComplete = false;
-            instructionDecrease += 1;
-            ++inProgressPC;
-        }
+        ++inProgressPC;
         if (Pipeline.run("j", "", "", "")) {
-            isInstructionComplete = true;
             Pipeline.setLatentJumpLocation(labelToLine.get(label));
-            pc++;
+            instructionDecrease += 1;
         }
+        pc++;
+
     }
 
     private void jr(String src) {
         // jr $s1
-        if (isInstructionComplete) {
-            isInstructionComplete = false;
-            instructionDecrease += 1;
-            ++inProgressPC;
-        }
+        ++inProgressPC;
         if (Pipeline.run("jr", "", src, "")) {
-            isInstructionComplete = true;
-            Pipeline.setLatentJumpLocation(registers[regNames.indexOf(src)]);
-            pc++;
+           Pipeline.setLatentJumpLocation(registers[regNames.indexOf(src)]);
+           instructionDecrease += 1;
         }
+        pc++;
     }
 
     private void jal(String label) {
         // jal fibonnaci
-        if (isInstructionComplete) {
-            isInstructionComplete = false;
-            instructionDecrease += 1;
-            ++inProgressPC;
-        }
+        ++inProgressPC;
         if (Pipeline.run("jal", "", "ra", "")) {
-            isInstructionComplete = true;
             registers[regNames.indexOf("ra")] = pc + 1;
             Pipeline.setLatentJumpLocation(labelToLine.get(label));
-            pc++;
+            instructionDecrease += 1;
         }
+        pc++;
     }
 
     private void displayPrompt() {
