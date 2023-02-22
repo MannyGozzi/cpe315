@@ -47,7 +47,7 @@ public class Pipeline {
         if (latentSquashCount == 3) {
             pipeLineOps.set(0, "squash");
             pipelineRegs.set(0, "empty");
-            parser.setPc(latentJumpLocation - 1);
+            parser.setPc(latentJumpLocation - 1); // account for the increment in the parser
             parser.setInProgressPC(latentJumpLocation);
             latentSquashCount = 0;
             return false;

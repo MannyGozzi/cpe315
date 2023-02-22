@@ -280,10 +280,8 @@ public class MIPSParser {
             isInstructionComplete = true;
             Pipeline.addRegisterRestore(registers);
             if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
-                //pc = labelToLine.get(label);
-                // dump();
                 instructions -= 3;
-                //++cycles;
+                ++cycles;
             }
             ++pc;
         }
@@ -300,9 +298,8 @@ public class MIPSParser {
             isInstructionComplete = true;
             Pipeline.addRegisterRestore(registers.clone());
             if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
-                //pc = labelToLine.get(label);
                 instructions -= 3;
-                //++cycles; // god knows why we have to increment cycles here
+                ++cycles;
             }
             ++pc;
         }
