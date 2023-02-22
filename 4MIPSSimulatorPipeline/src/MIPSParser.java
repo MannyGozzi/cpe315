@@ -112,18 +112,18 @@ public class MIPSParser {
         if (steps < 0) {
             while (pc < commands.size()) {
                 //System.out.println("pc: " + pc + " " + commands.get(pc));
-                System.out.println(commands.get(pc));
-                System.out.println(++count);
+                //System.out.println(commands.get(pc));
+                //System.out.println(++count);
                 executeCommand(commands.get(pc));
                 //System.out.println("pc: " + pc);
-                Pipeline.printPipeline(inProgressPC);
+                // Pipeline.printPipeline(inProgressPC);
             }
         } else {
             for (int i = 0; i < steps && pc < commands.size(); ++i) {
                 //System.out.println("pc: " + pc);
                 // System.out.println("pc: " + pc + " " + commands.get(pc));
-                System.out.println(commands.get(pc));
-                System.out.println(++count);
+                //System.out.println(commands.get(pc));
+                //System.out.println(++count);
                 executeCommand(commands.get(pc));
                 Pipeline.printPipeline(inProgressPC);
             }
@@ -283,7 +283,7 @@ public class MIPSParser {
                 //pc = labelToLine.get(label);
                 // dump();
                 instructions -= 3;
-                ++cycles;
+                //++cycles;
             }
             ++pc;
         }
@@ -302,7 +302,7 @@ public class MIPSParser {
             if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
                 //pc = labelToLine.get(label);
                 instructions -= 3;
-                ++cycles; // god knows why we have to increment cycles here
+                //++cycles; // god knows why we have to increment cycles here
             }
             ++pc;
         }
@@ -317,7 +317,7 @@ public class MIPSParser {
             ++inProgressPC;
             ++instructions;
         }
-        if (Pipeline.run("lw", dest, offsetSrc, "")) {
+        if (Pipeline.run("lw", dest, offsetSrc, "empty")) {
             isInstructionComplete = true;
             ++pc;
         }
@@ -333,7 +333,7 @@ public class MIPSParser {
             ++inProgressPC;
             ++instructions;
         }
-        if (Pipeline.run("sw", Integer.toString(store_address), offsetSrc, "")) {
+        if (Pipeline.run("sw", Integer.toString(store_address), offsetSrc, "empty")) {
             isInstructionComplete = true;
             ++pc;
         }

@@ -13,6 +13,7 @@ public class Pipeline {
     static MIPSParser parser;
     static int latentSquashCount = 0;
     static int latentJumpLocation = 0;
+    static boolean stallNext = false;
 
     public static Queue<int[]> registerRestores = new LinkedList<>();
     // shifts values in pipeline 1 unit right
@@ -34,13 +35,15 @@ public class Pipeline {
     false when the instruction is not completed
      */
     public static boolean run(String opcode, String destination, String requirement1, String requirement2) {
-        boolean shouldStall = needsToStall(opcode, requirement1, requirement2);
+        // sets jump location for squashing
+        needsToStall(opcode, requirement1, requirement2);
         String op = pipeLineOps.get(3);
         shiftPipelineRight();
         shiftPipelineRegRight();
         pipeLineOps.set(0, opcode);
         pipelineRegs.set(0, destination);
         handleBeqBne();
+        // squashing takes precedent
         if (latentSquashCount == 3) {
             pipeLineOps.set(0, "squash");
             pipelineRegs.set(0, "empty");
@@ -58,21 +61,19 @@ public class Pipeline {
             parser.setInProgressPC(latentJumpLocation);
             latentSquashCount = 0;
             return true;
-        } else if (shouldStall) {
+        } else if (stallNext) {
             pipeLineOps.set(1, "stall");
             pipelineRegs.set(1, "empty");
-            // System.out.println("Should stall");
-            // should insert a stall, but we return true in order to indicate an instruction is complete
+            stallNext = false;
+            // insert a stall, but we return true in order to indicate an instruction is complete
             return true;
-        } else if (op.equals("beq") || op.equals("bne")) {
+        } // these will always complete in one cycle
+        else if (op.equals("beq") || op.equals("bne")) {
             return true;
         }
-        shouldStall = needsToStall(opcode, requirement1, requirement2);
-        if (shouldStall) {
-            //System.out.println("Should stall");
-            return false;
-        }
-        return true;
+        if (needsToStall(opcode, requirement1, requirement2)) stallNext = true;
+        // tell the caller we're not done if we need to stall
+        return !needsToStall(opcode, requirement1, requirement2);
     }
 
     private static void handleBeqBne() {
@@ -115,11 +116,15 @@ public class Pipeline {
         pipelineRegs.set(2, "empty");
     }
 
+    /*
+    return true if the instruction needs to stall, given the current pipeline
+    return false if the instruction does not need to stall
+     */
     private static boolean needsToStall(String opcode, String requirement1, String requirement2) {
         switch (opcode) {
             case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw" -> {
                 String pipelineValue = pipelineRegs.get(1);
-                if (pipelineRegs.get(1).equals("empty")) return false;
+                //if (pipelineRegs.get(1).equals("empty")) return false;
                 if ( pipeLineOps.get(1).equals("lw") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
                     return true;
                 }
