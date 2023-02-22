@@ -124,17 +124,17 @@ public class Pipeline {
      */
     private static boolean needsToStall(String opcode, String requirement1, String requirement2) {
         switch (opcode) {
-            case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw" -> {
+            case "add", "sub", "and", "or", "slt", "sll", "srl", "lw", "sw", "addi" -> {
                 String pipelineValue = pipelineRegs.get(1);
                 //if (pipelineRegs.get(1).equals("empty")) return false;
-                if ( pipeLineOps.get(1).equals("lw") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
+                if ( pipeLineOps.get(1).equals("lw") &&  !pipelineValue.equals("0") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
                     return true;
                 }
             }
             case "beq", "bne" -> {
                 String pipelineValue = pipelineRegs.get(1);
                 //if (pipelineRegs.get(1).equals("empty")) return false;
-                if ( pipeLineOps.get(1).equals("lw") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
+                if ( pipeLineOps.get(1).equals("lw") &&  !pipelineValue.equals("0") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
                     return true;
                 }
                 return false;
@@ -214,5 +214,14 @@ public class Pipeline {
 
     public static void addRegisterRestore(int[] registers) {
         registerRestores.add(registers.clone());
+    }
+
+    public static void resetPipeline() {
+        pipeLineOps = new ArrayList<>(Arrays.asList("empty", "empty", "empty", "empty"));
+        pipelineRegs = new ArrayList<>(Arrays.asList("empty", "empty", "empty", "empty"));
+        latentSquashCount = 0;
+        latentJumpLocation = 0;
+        stallNext = false;
+        registerRestores = new LinkedList<>();
     }
 }

@@ -87,6 +87,7 @@ public class MIPSParser {
                 cycles = 0;
                 instructions = 0;
                 System.out.println("        Simulator reset\n");
+                Pipeline.resetPipeline();
             } else if (commands[0].equals("q")){
                 System.exit(1);
             }
@@ -210,7 +211,7 @@ public class MIPSParser {
             ++inProgressPC;
             ++instructions;
         }
-        if (Pipeline.run("addi", dest, src1, "")) {
+        if (Pipeline.run("addi", dest, src1, "empty")) {
             isInstructionComplete = true;
             ++pc;
         }
