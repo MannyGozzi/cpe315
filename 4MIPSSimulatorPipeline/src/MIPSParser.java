@@ -24,7 +24,6 @@ public class MIPSParser {
     boolean isInstructionComplete = true;
 
     int[] registers = new int[32];
-    int count = 0;
     ArrayList<String> regNames = new ArrayList<>(Arrays.asList("0", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "sp", "ra", "zero"));
     int[] mem = new int[8192];
     int instructions = 0;
@@ -65,10 +64,13 @@ public class MIPSParser {
             String inputString = input.nextLine();
             String[] commands = inputString.trim().split(" ");
             if (!script.equals("")) System.out.println(inputString + "\n");
+            else System.out.println();
             if (commands[0].equals("h")) {
                 printHelp();
             } else if (commands[0].equals("d")){
                 dump();
+            } else if (commands[0].equals("p")) {
+                Pipeline.printPipeline(inProgressPC);
             } else if (commands.length == 2 && commands[0].equals("s")){
                 step(Integer.parseInt(commands[1]));
             } else if (commands[0].equals("s")){
@@ -82,6 +84,8 @@ public class MIPSParser {
                 mem = new int[8192];
                 registers = new int[32];
                 inProgressPC = 0;
+                cycles = 0;
+                instructions = 0;
                 System.out.println("        Simulator reset\n");
             } else if (commands[0].equals("q")){
                 System.exit(1);
@@ -111,24 +115,17 @@ public class MIPSParser {
     private void step(int steps) {
         if (steps < 0) {
             while (pc < commands.size()) {
-                //System.out.println("pc: " + pc + " " + commands.get(pc));
                 //System.out.println(commands.get(pc));
-                //System.out.println(++count);
                 executeCommand(commands.get(pc));
-                //System.out.println("pc: " + pc);
                 // Pipeline.printPipeline(inProgressPC);
             }
         } else {
             for (int i = 0; i < steps && pc < commands.size(); ++i) {
-                //System.out.println("pc: " + pc);
-                // System.out.println("pc: " + pc + " " + commands.get(pc));
                 //System.out.println(commands.get(pc));
-                //System.out.println(++count);
                 executeCommand(commands.get(pc));
                 Pipeline.printPipeline(inProgressPC);
             }
         }
-            //System.out.println("        " + steps + " instruction(s) executed");
         if (pc == commands.size()) {
             cycles += 4;
             printProgramComplete();
@@ -281,7 +278,8 @@ public class MIPSParser {
             Pipeline.addRegisterRestore(registers);
             if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
                 instructions -= 3;
-                ++cycles;
+                //++cycles;
+
             }
             ++pc;
         }
@@ -299,7 +297,8 @@ public class MIPSParser {
             Pipeline.addRegisterRestore(registers.clone());
             if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
                 instructions -= 3;
-                ++cycles;
+                //++cycles;
+
             }
             ++pc;
         }
@@ -342,7 +341,7 @@ public class MIPSParser {
         ++instructions;
         if (Pipeline.run("j", "", "", "")) {
             Pipeline.setLatentJumpLocation(labelToLine.get(label));
-            instructions -= 1;
+            instructions -= 1; // skips 1 instruction
         }
         pc++;
 
@@ -554,6 +553,7 @@ public class MIPSParser {
         System.out.print("Cycles = " + cycles + "\t");
         System.out.println(" Instructions = " + instructions + "\t");
         System.out.println();
+        //System.exit(0);
     }
 
     public ArrayList<String> getRegNames() {

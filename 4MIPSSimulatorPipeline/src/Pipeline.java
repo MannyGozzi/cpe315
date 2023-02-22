@@ -68,9 +68,9 @@ public class Pipeline {
             // insert a stall, but we return true in order to indicate an instruction is complete
             return true;
         } // these will always complete in one cycle
-        else if (op.equals("beq") || op.equals("bne")) {
-            return true;
-        }
+//        else if (op.equals("beq") || op.equals("bne")) {
+//            return true;
+//        }
         if (needsToStall(opcode, requirement1, requirement2)) stallNext = true;
         // tell the caller we're not done if we need to stall
         return !needsToStall(opcode, requirement1, requirement2);
@@ -92,6 +92,7 @@ public class Pipeline {
                 parser.setInProgressPC(parser.labelToLine.get(label));
                 squash3();
                 parser.setRegisters(registers);
+                registerRestores.clear();
                 // System.out.println("JUMPING BNE " + args);
             }
         }
@@ -103,6 +104,7 @@ public class Pipeline {
                 // System.out.println("JUMPING BEQ " + args);
                 // dumpRegisters(registers);
                 parser.setRegisters(registers);
+                registerRestores.clear();
             }
         }
     }
@@ -130,6 +132,11 @@ public class Pipeline {
                 }
             }
             case "beq", "bne" -> {
+                String pipelineValue = pipelineRegs.get(1);
+                //if (pipelineRegs.get(1).equals("empty")) return false;
+                if ( pipeLineOps.get(1).equals("lw") && (pipelineValue.equals(requirement1) || pipelineValue.equals(requirement2))) {
+                    return true;
+                }
                 return false;
             }
             case "j", "jr", "jal" -> {
