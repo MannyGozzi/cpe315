@@ -15,6 +15,8 @@ public class Pipeline {
     static int latentJumpLocation = 0;
     static boolean stallNext = false;
 
+    static boolean noWrite = false;
+
     public static Queue<int[]> registerRestores = new LinkedList<>();
     // shifts values in pipeline 1 unit right
     private static void shiftPipelineRight() {
@@ -93,6 +95,7 @@ public class Pipeline {
                 squash3();
                 parser.setRegisters(registers);
                 registerRestores.clear();
+                noWrite = false;
                 // System.out.println("JUMPING BNE " + args);
             }
         }
@@ -103,6 +106,7 @@ public class Pipeline {
                 squash3();
                 // System.out.println("JUMPING BEQ " + args);
                 // dumpRegisters(registers);
+                noWrite = false;
                 parser.setRegisters(registers);
                 registerRestores.clear();
             }
@@ -223,5 +227,13 @@ public class Pipeline {
         latentJumpLocation = 0;
         stallNext = false;
         registerRestores = new LinkedList<>();
+    }
+
+    public static void setNoWrite() {
+        noWrite = true;
+    }
+
+    public static boolean canWrite() {
+        return !noWrite;
     }
 }

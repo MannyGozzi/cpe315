@@ -1,4 +1,5 @@
 import java.io.*;
+import java.nio.channels.Pipe;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -279,6 +280,7 @@ public class MIPSParser {
             Pipeline.addRegisterRestore(registers);
             if (registers[regNames.indexOf(src1)] == registers[regNames.indexOf(src2)]) {
                 instructions -= 3;
+                Pipeline.setNoWrite();
                 //++cycles;
 
             }
@@ -298,6 +300,7 @@ public class MIPSParser {
             Pipeline.addRegisterRestore(registers.clone());
             if (registers[regNames.indexOf(src1)] != registers[regNames.indexOf(src2)]) {
                 instructions -= 3;
+                Pipeline.setNoWrite();
                 //++cycles;
 
             }
@@ -326,7 +329,7 @@ public class MIPSParser {
         if (isInstructionComplete) {
             isInstructionComplete = false;
             int srcData = registers[regNames.indexOf(data)];
-            mem[store_address] = srcData;
+            if (Pipeline.canWrite()) mem[store_address] = srcData;
             ++inProgressPC;
             ++instructions;
         }
