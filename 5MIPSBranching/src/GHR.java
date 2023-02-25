@@ -16,7 +16,6 @@ public class GHR {
     public static boolean pushGHR(String bit) {
         if (GHR_counts == null) { System.err.println("GHR not initialized"); return false;}
         int GHR_index = getDecimalGHR();
-        System.out.println(GHR_index + " " + GHR_counts[GHR_index]);
         boolean isTaken = bit.equals("1");
         boolean isTakenPrediction = isTaken(GHR_counts[GHR_index]);
         if (isTaken) incIndex(GHR_index);
