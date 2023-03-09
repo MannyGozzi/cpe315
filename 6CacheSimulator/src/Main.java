@@ -10,26 +10,21 @@ public class Main {
             String inputFilename = args[0];
             File file = new File(inputFilename);
             Scanner input = new Scanner(file);
-            Cache cache = new Cache(2, 1);
-            int hits = 0; int misses = 0;
+            Cache cache = new Cache(2, 1, 1);
             while (input.hasNext()) {
-                String line = input.nextLine();
-                int address = Integer.parseInt(line, 16);
-                if (cache.read(address)) {
-                    ++hits;
-                } else {
-                    ++misses;
-                }
+                int address = Integer.parseInt(input.nextLine(), 16);
+                cache.read(address);
             }
-            printStats(hits, misses, 1, 2, 1, 1);
+            printStats(1, cache);
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error: ");
+            e.printStackTrace();
         }
     }
 
-    private static void printStats(int hits, int misses, int cacheNum, int cacheSizeKB, int associativity, int blockSize) {
+    private static void printStats(int cacheNum, Cache cache) {
         System.out.println("Cache #" + cacheNum);
-        System.out.println("Cache Size: " + cacheSizeKB*1024 + "B\t" + "Associativity: " + associativity + "\t" + "Block Size: " + blockSize);
-        System.out.print("Hits: " + hits + "\t"); System.out.format("Hit Rate: %.2f%%", (double) hits/(hits+misses) * 100);
+        System.out.println("Cache size: " + cache.getCacheSizeKB()*1024 + "B\t" + "Associativity: " + cache.getAssociativity() + "\t" + "Block Size: " + cache.getBlockSize());
+        System.out.print("Hits: " + cache.getHits() + "\t"); System.out.format("Hit Rate: %.2f%%", (double) cache.getHits()/(cache.getHits()+cache.getMisses()) * 100);
     }
 }
