@@ -10,7 +10,7 @@ public class Main {
             String inputFilename = args[0];
             File file = new File(inputFilename);
             Scanner input = new Scanner(file);
-            CacheDirect cache = new CacheDirect(2, 1);
+            Cache cache = new Cache(2, 1);
             int hits = 0; int misses = 0;
             while (input.hasNext()) {
                 String line = input.nextLine();
