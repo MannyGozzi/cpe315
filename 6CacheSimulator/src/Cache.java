@@ -2,30 +2,30 @@ import java.util.LinkedList;
 
 public class Cache {
     private final int numBits = 32;
-    private int sizeTags, associativity, blockSize, hits, misses, sizeBytes, numBitsTag, lineSize;
+    private int numTags, numBitsTag, sizeBytes, sizeBlock, sizeLine, associativity, hits, misses;
     private int[][][] cache;
     private final int wordSize = 4;
-    private final int offsetByte = (int) Math.floor(Math.log(wordSize)/Math.log(2)); // 2^2 = 4 bytes
-    private int offsetBlock; // 2^5 = 32 bytes
+    private final int numBitsByte = (int) Math.floor(Math.log(wordSize)/Math.log(2)); // 2^2 = 4 bytes
+    private int numBitsBlock; // 2^5 = 32 bytes
     private int numBitsIndex;
     private LinkedList<Integer>[] LRU; // least recently used
 
     public Cache(int sizeKB, int blockSize, int associativity) {
-        this.blockSize = blockSize;
+        this.sizeBlock = blockSize;
         this.associativity = associativity;
         this.sizeBytes = sizeKB * 1024;
-        offsetBlock = (int) (Math.log(blockSize)/Math.log(2.0));
+        numBitsBlock = (int) (Math.log(blockSize)/Math.log(2.0));
         numBitsIndex = (int) (Math.log((double) sizeBytes / (double) wordSize / (double) blockSize) / Math.log(2.0));
-        numBitsTag = numBits - numBitsIndex - offsetBlock - offsetByte;
-        sizeTags = (int) Math.pow(2, numBitsTag);
-        cache = new int[sizeTags][associativity][blockSize*wordSize];
-        LRU = new LinkedList[sizeTags];
-        lineSize = blockSize*wordSize;
-        for (int i = 0; i < sizeTags; ++i) {
+        numBitsTag = numBits - numBitsIndex - numBitsBlock - numBitsByte;
+        numTags = (int) Math.pow(2, numBitsTag);
+        cache = new int[numTags][associativity][blockSize*wordSize];
+        LRU = new LinkedList[numTags];
+        sizeLine = blockSize*wordSize;
+        for (int i = 0; i < numTags; ++i) {
             LRU[i] = new LinkedList<>();
             LRU[i].add(0);
         }
-        System.out.println("offsetBlock:\t" + offsetBlock + "\toffsetByte: " + offsetByte + "\toffsetTag: " + numBitsTag + "\tsizeTags " + sizeTags);
+        System.out.println("offsetBlock:\t" + numBitsBlock + "\toffsetByte: " + numBitsByte + "\toffsetTag: " + numBitsTag + "\tsizeTags " + numTags + "\tlineSize: " + sizeLine);
     }
 
     /* returns true if the address was a hit, false otherwise
@@ -35,33 +35,31 @@ public class Cache {
         int blockOffset = getBlockOffset(address);
         int tag = getTag(address);
 
-        //System.out.print("tag: " + tag + "\tblockOffset: " + blockOffset + "\taddress: " + address);
         for (int mru = 0; mru < associativity; mru++) {
             try {
 
                 if (cache[tag][mru][blockOffset * wordSize + byteOffset] == address) {
                     ++hits;
-                    loadCacheBlock(tag, address);
                     accessCache(tag, mru);
-                } else {
-                    // otherwise we missed
-                    loadCacheBlock(tag, address);
-                    accessCache(tag, getLRU(tag));
-                    ++misses;
+                    return;
                 }
             } catch (Exception e) {
                 System.out.println(tag + " " + mru + " " + blockOffset*wordSize + byteOffset);
                 e.printStackTrace();
             }
         }
+        // otherwise we missed
+        loadCacheBlock(tag, address);
+        accessCache(tag, getLRU(tag));
+        ++misses;
     }
 
     private int getByteOffset(int address) {
-        return address << (numBits - offsetByte) >>> (numBits - offsetByte);
+        return address << (numBits - numBitsByte) >>> (numBits - numBitsByte);
     }
 
     private int getBlockOffset(int address) {
-        return address << (numBits - offsetBlock - offsetByte) >>> (numBits - offsetByte);
+        return address << (numBits - numBitsBlock - numBitsByte) >>> (numBits - numBitsByte);
     }
 
     private int getTag(int address) {
@@ -85,9 +83,9 @@ public class Cache {
     }
     /* Loads the block of memory for the specified address utilizing the correct tag, LRU location with n address defined by the block size */
     private void loadCacheBlock(int tag, int address) {
-        int startAddress = address - address%lineSize;
+        int startAddress = address - address% sizeLine;
         int LRU = getLRU(tag);
-        for (int i = 0; i < lineSize; i++) {
+        for (int i = 0; i < sizeLine; i++) {
             cache[tag][LRU][i] = startAddress + i;
         }
     }
@@ -108,7 +106,7 @@ public class Cache {
         return associativity;
     }
 
-    public int getBlockSize() {
-        return blockSize;
+    public int getSizeBlock() {
+        return sizeBlock;
     }
 }
