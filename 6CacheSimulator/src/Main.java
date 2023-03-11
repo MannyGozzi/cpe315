@@ -24,7 +24,7 @@ public class Main {
 
     private static void printStats(int cacheNum, Cache cache) {
         System.out.println("Cache #" + cacheNum);
-        System.out.println("Cache size: " + cache.getCacheSizeKB()*1024 + "B\t" + "Associativity: " + cache.getAssociativity() + "\t" + "Block Size: " + cache.getBlockSize());
+        System.out.println("Cache size: " + cache.getCacheSizeBytes() + "B\t" + "Associativity: " + cache.getAssociativity() + "\t" + "Block Size: " + cache.getBlockSize());
         System.out.print("Hits: " + cache.getHits() + "\t"); System.out.format("Hit Rate: %.2f%%", (double) cache.getHits()/(cache.getHits()+cache.getMisses()) * 100);
     }
 }
