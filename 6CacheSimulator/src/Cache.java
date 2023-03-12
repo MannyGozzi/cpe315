@@ -59,7 +59,7 @@ public class Cache {
     }
 
     private int getBlockOffset(int address) {
-        if (associativity == 1) return 0;
+        if (numBitsBlock == 0) return 0;
         return address << (numBits - numBitsBlock - numBitsByte) >>> (numBits - numBitsByte);
     }
 
