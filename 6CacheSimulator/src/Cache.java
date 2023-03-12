@@ -2,10 +2,10 @@ import java.util.LinkedList;
 
 public class Cache {
     private final int numBits = 32;
-    private int numBitsTag, sizeBytes, sizeBlock, sizeLine, associativity, indicies, hits, misses;
-    private int[][] cache;
     private final int wordSize = 4;
-    private final int numBitsByte = (int) Math.floor(Math.log(wordSize)/Math.log(2)); // byteOffset 2^2 = 4 bytes
+    private final int numBitsByte = 2; // byteOffset 2^2 = 4 bytes
+    private int numBitsTag, sizeBytes, sizeBlock, associativity, indicies, hits, misses;
+    private int[][] cache;
     private int numBitsBlock; // blockOffset 2^5 = 32 bytes
     private int numBitsIndex;
     private LinkedList<Integer>[] LRU; // least recently used
@@ -14,54 +14,40 @@ public class Cache {
         this.sizeBlock = blockSize;
         this.associativity = associativity;
         this.sizeBytes = sizeKB * 1024;
-        numBitsBlock = (int) (Math.log(blockSize)/Math.log(2.0));
-        numBitsIndex = (int) (Math.log((double) sizeBytes / (double) wordSize / (double) blockSize) / Math.log(2.0));
+        numBitsBlock = (int) (Math.log(blockSize)/Math.log(2));
+        int lineSize = blockSize * wordSize * associativity;
+        numBitsIndex = (int) (Math.log((double)sizeBytes / (double)lineSize) / Math.log(2));
         indicies = (int) Math.pow(2, numBitsIndex);
         numBitsTag = numBits - numBitsIndex - numBitsBlock - numBitsByte;
-        sizeLine = blockSize*wordSize;
         cache = new int[indicies][associativity];
         LRU = new LinkedList[indicies];
         for (int i = 0; i < indicies; ++i) {
             LRU[i] = new LinkedList<>();
-            LRU[i].add(0);
+            for (int j = 0; j < associativity; ++j) {
+                LRU[i].add(j);
+            }
             for (int associate = 0; associate < associativity; ++ associate) {
                 cache[i][associate] = -1;
             }
         }
-        // System.out.println("offsetBlock:\t" + numBitsBlock + "\toffsetByte: " + numBitsByte + "\tTagbits: " + numBitsTag + "\tindicies: " + indicies + "\tTag Bits " + numBitsIndex +  "\tlineSize: " + sizeLine);
     }
 
-    /* returns true if the address was a hit, false otherwise
-    * Will automatically add the corresponding values to the cache */
+    /* Will read the address and update hit and miss values in the cache Object */
     public void read(int address) {
         int tag = getTag(address);
         int index = getIndex(address);
-        for (int mru = 0; mru < associativity; mru++) {
-            try {
-                // System.out.println("looking for address: " + address + " in tag: " + tag + " mru: " + mru + " blockOffset: " + blockOffset + " byteOffset: " + byteOffset);
-                if (cache[index][mru] == tag) {
-                    ++hits;
-                    accessCache(index, mru);
-                    return;
-                }
-            } catch (Exception e) {
-                System.out.println("Tag:" + tag + "\tMRU: " + mru);
-                e.printStackTrace();
+        for (int mru = 0; mru < associativity; ++mru) {
+            if (cache[index][mru] == tag) {
+                ++hits;
+                accessCache(index, mru);
+                return;
             }
         }
         // otherwise we missed
-        loadCacheBlock(tag, index);
         accessCache(index, getLRU(index));
+        loadCacheBlock(tag, index);
         ++misses;
     }
-
-//    private int getByteOffset(int address) {
-//        return address << (numBits - numBitsByte) >>> (numBits - numBitsByte);
-//    }
-//
-//    private int getBlockOffset(int address) {
-//        return address << (numBits - numBitsBlock - numBitsByte) >>> (numBits - numBitsByte);
-//    }
 
     private int getTag(int address) {
         return address >>> (numBits - numBitsTag);
@@ -72,12 +58,10 @@ public class Cache {
     }
     /* updates the LRU for the specified tag by sending the most recently used */
     private void accessCache(int index, int mru) {
-        if (!LRU[index].contains(mru)) {
-            if (LRU[index].size() == associativity) {
-                LRU[index].removeFirst();
-            }
-        } else {
+        if (LRU[index].contains(mru)) {
             LRU[index].removeFirstOccurrence(mru);
+        } else if (LRU[index].size() == associativity) {
+            LRU[index].removeFirst();
         }
         LRU[index].addLast(mru);
     }
@@ -88,8 +72,8 @@ public class Cache {
     }
     /* Loads the block of memory for the specified address utilizing the correct tag, LRU location with n address defined by the block size */
     private void loadCacheBlock(int tag, int index) {
-        int LRU = getLRU(index);
-        cache[index][LRU] = tag;
+        int lruIndex = getLRU(index);
+        cache[index][lruIndex] = tag;
     }
 
     public int getCacheSizeBytes() {
