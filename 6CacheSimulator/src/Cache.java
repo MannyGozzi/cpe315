@@ -5,8 +5,8 @@ public class Cache {
     private int numTags, numBitsTag, sizeBytes, sizeBlock, sizeLine, associativity, hits, misses;
     private int[][][] cache;
     private final int wordSize = 4;
-    private final int numBitsByte = (int) Math.floor(Math.log(wordSize)/Math.log(2)); // 2^2 = 4 bytes
-    private int numBitsBlock; // 2^5 = 32 bytes
+    private final int numBitsByte = (int) Math.floor(Math.log(wordSize)/Math.log(2)); // byteOffset 2^2 = 4 bytes
+    private int numBitsBlock; // blockOffset 2^5 = 32 bytes
     private int numBitsIndex;
     private LinkedList<Integer>[] LRU; // least recently used
 
@@ -18,9 +18,9 @@ public class Cache {
         numBitsIndex = (int) (Math.log((double) sizeBytes / (double) wordSize / (double) blockSize) / Math.log(2.0));
         numBitsTag = numBits - numBitsIndex - numBitsBlock - numBitsByte;
         numTags = (int) Math.pow(2, numBitsTag);
-        cache = new int[numTags][associativity][blockSize*wordSize];
-        LRU = new LinkedList[numTags];
         sizeLine = blockSize*wordSize;
+        cache = new int[numTags][associativity][sizeLine];
+        LRU = new LinkedList[numTags];
         for (int i = 0; i < numTags; ++i) {
             LRU[i] = new LinkedList<>();
             LRU[i].add(0);
@@ -37,7 +37,7 @@ public class Cache {
 
         for (int mru = 0; mru < associativity; mru++) {
             try {
-
+                // System.out.println("looking for address: " + address + " in tag: " + tag + " mru: " + mru + " blockOffset: " + blockOffset + " byteOffset: " + byteOffset);
                 if (cache[tag][mru][blockOffset * wordSize + byteOffset] == address) {
                     ++hits;
                     accessCache(tag, mru);
@@ -59,6 +59,7 @@ public class Cache {
     }
 
     private int getBlockOffset(int address) {
+        if (associativity == 1) return 0;
         return address << (numBits - numBitsBlock - numBitsByte) >>> (numBits - numBitsByte);
     }
 
@@ -84,8 +85,10 @@ public class Cache {
     /* Loads the block of memory for the specified address utilizing the correct tag, LRU location with n address defined by the block size */
     private void loadCacheBlock(int tag, int address) {
         int startAddress = address - address% sizeLine;
+        // System.out.println("start address : " + startAddress);
         int LRU = getLRU(tag);
         for (int i = 0; i < sizeLine; i++) {
+            // System.out.println("written address : " + (startAddress + i));
             cache[tag][LRU][i] = startAddress + i;
         }
     }
