@@ -2,8 +2,8 @@ import java.util.LinkedList;
 
 public class Cache {
     private final int numBits = 32;
-    private int numTags, numBitsTag, sizeBytes, sizeBlock, sizeLine, associativity, hits, misses;
-    private int[][][] cache;
+    private int numBitsTag, sizeBytes, sizeBlock, sizeLine, associativity, indicies, hits, misses;
+    private int[][] cache;
     private final int wordSize = 4;
     private final int numBitsByte = (int) Math.floor(Math.log(wordSize)/Math.log(2)); // byteOffset 2^2 = 4 bytes
     private int numBitsBlock; // blockOffset 2^5 = 32 bytes
@@ -16,81 +16,80 @@ public class Cache {
         this.sizeBytes = sizeKB * 1024;
         numBitsBlock = (int) (Math.log(blockSize)/Math.log(2.0));
         numBitsIndex = (int) (Math.log((double) sizeBytes / (double) wordSize / (double) blockSize) / Math.log(2.0));
+        indicies = (int) Math.pow(2, numBitsIndex);
         numBitsTag = numBits - numBitsIndex - numBitsBlock - numBitsByte;
-        numTags = (int) Math.pow(2, numBitsTag);
         sizeLine = blockSize*wordSize;
-        cache = new int[numTags][associativity][sizeLine];
-        LRU = new LinkedList[numTags];
-        for (int i = 0; i < numTags; ++i) {
+        cache = new int[indicies][associativity];
+        LRU = new LinkedList[indicies];
+        for (int i = 0; i < indicies; ++i) {
             LRU[i] = new LinkedList<>();
             LRU[i].add(0);
+            for (int associate = 0; associate < associativity; ++ associate) {
+                cache[i][associate] = -1;
+            }
         }
-        System.out.println("offsetBlock:\t" + numBitsBlock + "\toffsetByte: " + numBitsByte + "\toffsetTag: " + numBitsTag + "\tsizeTags " + numTags + "\tlineSize: " + sizeLine);
+        // System.out.println("offsetBlock:\t" + numBitsBlock + "\toffsetByte: " + numBitsByte + "\tTagbits: " + numBitsTag + "\tindicies: " + indicies + "\tTag Bits " + numBitsIndex +  "\tlineSize: " + sizeLine);
     }
 
     /* returns true if the address was a hit, false otherwise
     * Will automatically add the corresponding values to the cache */
     public void read(int address) {
-        int byteOffset = getByteOffset(address);
-        int blockOffset = getBlockOffset(address);
         int tag = getTag(address);
-
+        int index = getIndex(address);
         for (int mru = 0; mru < associativity; mru++) {
             try {
                 // System.out.println("looking for address: " + address + " in tag: " + tag + " mru: " + mru + " blockOffset: " + blockOffset + " byteOffset: " + byteOffset);
-                if (cache[tag][mru][blockOffset * wordSize + byteOffset] == address) {
+                if (cache[index][mru] == tag) {
                     ++hits;
-                    accessCache(tag, mru);
+                    accessCache(index, mru);
                     return;
                 }
             } catch (Exception e) {
-                System.out.println(tag + " " + mru + " " + blockOffset*wordSize + byteOffset);
+                System.out.println("Tag:" + tag + "\tMRU: " + mru);
                 e.printStackTrace();
             }
         }
         // otherwise we missed
-        loadCacheBlock(tag, address);
-        accessCache(tag, getLRU(tag));
+        loadCacheBlock(tag, index);
+        accessCache(index, getLRU(index));
         ++misses;
     }
 
-    private int getByteOffset(int address) {
-        return address << (numBits - numBitsByte) >>> (numBits - numBitsByte);
-    }
-
-    private int getBlockOffset(int address) {
-        if (numBitsBlock == 0) return 0;
-        return address << (numBits - numBitsBlock - numBitsByte) >>> (numBits - numBitsByte);
-    }
+//    private int getByteOffset(int address) {
+//        return address << (numBits - numBitsByte) >>> (numBits - numBitsByte);
+//    }
+//
+//    private int getBlockOffset(int address) {
+//        return address << (numBits - numBitsBlock - numBitsByte) >>> (numBits - numBitsByte);
+//    }
 
     private int getTag(int address) {
         return address >>> (numBits - numBitsTag);
     }
+
+    private int getIndex(int address) {
+        return address << numBitsTag >>> (numBits - numBitsIndex);
+    }
     /* updates the LRU for the specified tag by sending the most recently used */
-    private void accessCache(int tag, int mru) {
-        if (!LRU[tag].contains(mru)) {
-            if (LRU[tag].size() == associativity) {
-                LRU[tag].removeFirst();
+    private void accessCache(int index, int mru) {
+        if (!LRU[index].contains(mru)) {
+            if (LRU[index].size() == associativity) {
+                LRU[index].removeFirst();
             }
         } else {
-            LRU[tag].remove(mru);
+            LRU[index].removeFirstOccurrence(mru);
         }
-        LRU[tag].addLast(mru);
+        LRU[index].addLast(mru);
     }
 
     /* returns the LRU location for the specified tag */
-    private int getLRU(int tag) {
-        return LRU[tag].getFirst();
+    private int getLRU(int index) {
+        return LRU[index].getFirst();
     }
     /* Loads the block of memory for the specified address utilizing the correct tag, LRU location with n address defined by the block size */
-    private void loadCacheBlock(int tag, int address) {
-        int startAddress = address - address% sizeLine;
-        // System.out.println("start address : " + startAddress);
-        int LRU = getLRU(tag);
-        for (int i = 0; i < sizeLine; i++) {
-            // System.out.println("written address : " + (startAddress + i));
-            cache[tag][LRU][i] = startAddress + i;
-        }
+    private void loadCacheBlock(int tag, int index) {
+        int LRU = getLRU(index);
+        cache[index][LRU] = tag;
     }
 
     public int getCacheSizeBytes() {
@@ -111,5 +110,11 @@ public class Cache {
 
     public int getSizeBlock() {
         return sizeBlock;
+    }
+
+    @Override
+    public String toString() {
+        return "Cache size: " + this.getCacheSizeBytes() + "B\t" + "Associativity: " + this.getAssociativity() + "\t" + "Block Size: " + this.getSizeBlock()
+            + "\nHits: " + this.getHits() + "\t" + String.format("Hit Rate: %.2f%%", (double) this.getHits()/(this.getHits()+this.getMisses()) * 100);
     }
 }
