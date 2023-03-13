@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.File;
-public class Main {
+public class lab6 {
     public static void main(String[] args) {
         ArrayList<Cache> caches = new ArrayList<>();
         if (args.length != 1) {
