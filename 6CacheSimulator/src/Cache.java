@@ -34,6 +34,7 @@ public class Cache {
 
     /* Will read the address and update hit and miss values in the cache Object */
     public void read(int address) {
+
         int tag = getTag(address);
         int index = getIndex(address);
         for (int mru = 0; mru < associativity; ++mru) {
@@ -58,19 +59,17 @@ public class Cache {
     }
     /* updates the LRU for the specified tag by sending the most recently used */
     private void accessCache(int index, int mru) {
-        if (LRU[index].contains(mru)) {
-            LRU[index].removeFirstOccurrence(mru);
-        } else if (LRU[index].size() == associativity) {
-            LRU[index].removeFirst();
-        }
+        if (LRU[index].contains(mru)) LRU[index].removeFirstOccurrence(mru);
+        else LRU[index].removeFirst();
         LRU[index].addLast(mru);
     }
 
-    /* returns the LRU location for the specified tag */
+    /* returns the LRU location for the specified index */
     private int getLRU(int index) {
         return LRU[index].getFirst();
     }
-    /* Loads the block of memory for the specified address utilizing the correct tag, LRU location with n address defined by the block size */
+    /* Loads the block of memory for the specified address utilizing the correct tag,
+     LRU location with n address defined by the block size */
     private void loadCacheBlock(int tag, int index) {
         int lruIndex = getLRU(index);
         cache[index][lruIndex] = tag;
@@ -99,6 +98,6 @@ public class Cache {
     @Override
     public String toString() {
         return "Cache size: " + this.getCacheSizeBytes() + "B\t" + "Associativity: " + this.getAssociativity() + "\t" + "Block Size: " + this.getSizeBlock()
-            + "\nHits: " + this.getHits() + "\t" + String.format("Hit Rate: %.2f%%", (double) this.getHits()/(this.getHits()+this.getMisses()) * 100);
+            + "\nHits: " + this.getHits() + "\t" + String.format("Hit Rate: %.2f%%", (double) this.getHits()/(double) (this.getHits()+this.getMisses()) * 100);
     }
 }
