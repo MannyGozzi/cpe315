@@ -40,13 +40,13 @@ public class Cache {
         for (int mru = 0; mru < associativity; ++mru) {
             if (cache[index][mru] == tag) {
                 ++hits;
-                accessCache(index, mru);
+                updateLRU(index, mru);
                 return;
             }
         }
         // otherwise we missed
-        accessCache(index, getLRU(index));
         loadCacheBlock(tag, index);
+        updateLRU(index, getLRU(index));
         ++misses;
     }
 
@@ -58,9 +58,9 @@ public class Cache {
         return address << numBitsTag >>> (numBits - numBitsIndex);
     }
     /* updates the LRU for the specified tag by sending the most recently used */
-    private void accessCache(int index, int mru) {
+    private void updateLRU(int index, int mru) {
         if (LRU[index].contains(mru)) LRU[index].removeFirstOccurrence(mru);
-        else LRU[index].removeFirst();
+        else LRU[index].removeFirst(); // prob
         LRU[index].addLast(mru);
     }
 
