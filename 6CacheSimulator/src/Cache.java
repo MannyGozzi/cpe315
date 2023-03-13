@@ -97,7 +97,7 @@ public class Cache {
 
     @Override
     public String toString() {
-        return "Cache size: " + this.getCacheSizeBytes() + "B\t" + "Associativity: " + this.getAssociativity() + "\t" + "Block Size: " + this.getSizeBlock()
+        return "Cache size: " + this.getCacheSizeBytes() + "B\t" + "Associativity: " + this.getAssociativity() + "\t" + "Block size: " + this.getSizeBlock()
             + "\nHits: " + this.getHits() + "\t" + String.format("Hit Rate: %.2f%%", (double) this.getHits()/(double) (this.getHits()+this.getMisses()) * 100);
     }
 }
